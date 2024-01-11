@@ -84,6 +84,7 @@ function search_from_marker(marker, latitude, longitude){
 // Mover el mapa a esas coordenadas
 function moveMapToPlace(map,lat,lon){
   map.setCenter({lat: lat,lng: lon});
+  map.setZoom(18);
 }  
 
 // Añade la polyline, se necesita un object con ["polyline"] con las polylines

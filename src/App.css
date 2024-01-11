@@ -6,7 +6,6 @@
 }
 .menu-parameters-icons{
   font-size: 25px;
-  background-color: rgb(20, 20, 20);
   margin:20px;
   padding: 10px;
   width: 50px;
@@ -19,17 +18,17 @@
   cursor: pointer;
 }
 .menu-parameters-icons:hover{
-  background-color: rgb(40, 40, 40);
   width:55px;
 }
 .shift_started_modal{
-display: block; /* Hidden by default */
+display: flex; /* Hidden by default */
+align-items: center;
 position: fixed; /* Stay in place */
 z-index: 4; /* Sit on top */
-left: 0;
 top: 0;
-width: 100%; /* Full width */
-height: 100%; /* Full height */
+width: 100vw; /* Full width */
+height: 100vh; /* Full height */
+background-color: #3030305d;
 overflow: auto; /* Enable scroll if needed */
 }
 .remove-element{
@@ -48,7 +47,7 @@ margin:0px;
 float: right;
 position:absolute;
 right:3px;
-top:3px;
+top:-4px;
 }
 @media (max-width:990px) {
 .left-components{
@@ -62,4 +61,27 @@ margin-top:0px;
 }
 .transportation-icon{
 font-size: 50px;
+}
+.transport-vehicles{ 
+  padding: 5px;
+  width: 100px;
+  aspect-ratio: 1; 
+  display: grid; 
+  place-items:center; 
+  border-radius: 4px 
+}
+.transport-vehicles:hover{
+  background-color: #3795fa;
+}
+.transport-vehicles > p{
+  margin-bottom: 0px;
+  font-size: 15px;
+}
+.upper-buttons-div>.btn{
+  margin-left: 30px;
+  color:white;
+  border:0px;
+}
+.upper-buttons-div>.btn>img{
+  height:30px
 }
