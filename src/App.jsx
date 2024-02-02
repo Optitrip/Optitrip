@@ -1,7 +1,7 @@
 import { useState, createContext, useEffect, useContext, useRef } from 'react'
 import './App.css'
 import './style.css'
-
+import * as here from './here.js'; 
 var API_KEY="IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng";
 const OpenModalContext = createContext(null);
 var avoid_zone_index=0;
@@ -35,6 +35,26 @@ var default_state={
     modal_parameter_opened:"destinations_parameter",
     ephemiral_marker:[]
 };
+var platform = new H.service.Platform({
+    'apikey': 'IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng'
+});
+var defaultLayers = platform.createDefaultLayers();
+var map = new H.Map(document.getElementById('map'),
+defaultLayers.vector.normal.map,{
+center: {lat: 21.12908,lng:-101.685086},
+zoom: 13,
+pixelRatio: window.devicePixelRatio || 1
+});
+var mapEvents = new H.mapevents.MapEvents(map);
+// add behavior control
+var behavior = new H.mapevents.Behavior(mapEvents);
+window.addEventListener('resize',() => map.getViewPort().resize());
+var ui = H.ui.UI.createDefault(map,defaultLayers);
+function moveMapToPlace(map,lat,lon){
+    map.setCenter({lat: lat,lng: lon});
+    map.setZoom(18);
+}  
+
 export default function App(props) {
     const[state, setState]=useState(default_state)
     useEffect(() => {
@@ -42,6 +62,8 @@ export default function App(props) {
         return () => {
             map.removeEventListener('contextmenu', handleContextMenu, false);
         };
+        
+        
     }, [map]);
     const handleContextMenu = (ev) => {
         if(confirm("¿Deseas agregar este punto a tu ruta?")){
