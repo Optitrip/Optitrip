@@ -23,10 +23,7 @@
     zoom: 13,
     pixelRatio: window.devicePixelRatio || 1
   });
-  try{
-    var behavior = new H.mapevents.Behavior(new H.mapevents.MapEvents(map));
-  }
-  catch{}
+  var behavior = new H.mapevents.MapEvents(map);
   window.addEventListener('resize',() => map.getViewPort().resize());
   var ui = H.ui.UI.createDefault(map,defaultLayers);
 
@@ -103,6 +100,7 @@ function addPolylineToMap(map, poly, color) {
 function remove_parts(elements) {
   let parts=elements.flat(1);
   parts.forEach(part=>{
+    console.log(part)
     map.removeObject(part);
   })
 }

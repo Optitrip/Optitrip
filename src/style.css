@@ -1,0 +1,195 @@
+@font-face {
+  font-family: 'icomoon';
+  src:  url('fonts/icomoon.eot?6ibyvh');
+  src:  url('fonts/icomoon.eot?6ibyvh#iefix') format('embedded-opentype'),
+    url('fonts/icomoon.ttf?6ibyvh') format('truetype'),
+    url('fonts/icomoon.woff?6ibyvh') format('woff'),
+    url('fonts/icomoon.svg?6ibyvh#icomoon') format('svg');
+  font-weight: normal;
+  font-style: normal;
+  font-display: block;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+  /* use !important to prevent issues with browser extensions that change fonts */
+  font-family: 'icomoon' !important;
+  speak: never;
+  font-style: normal;
+  font-weight: normal;
+  font-variant: normal;
+  text-transform: none;
+  line-height: 1;
+
+  /* Better Font Rendering =========== */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.icon-icono-corto:before {
+  content: "\e903";
+}
+.icon-icono-paisajista:before {
+  content: "\e905";
+}
+.icon-caravan:before {
+  content: "\e924";
+}
+.icon-Trailer:before {
+  content: "\e930";
+}
+.icon-simple:before {
+  content: "\e925";
+}
+.icon-doble-remolque:before {
+  content: "\e92f";
+}
+.icon-rigido:before {
+  content: "\e931";
+}
+.icon-eje1:before {
+  content: "\e926";
+}
+.icon-eje2:before {
+  content: "\e927";
+}
+.icon-eje3:before {
+  content: "\e928";
+}
+.icon-eje4:before {
+  content: "\e92a";
+}
+.icon-eje5:before {
+  content: "\e92b";
+}
+.icon-eje6:before {
+  content: "\e92c";
+}
+.icon-eje7:before {
+  content: "\e92d";
+}
+.icon-eje8:before {
+  content: "\e92e";
+}
+.icon-Remolque:before {
+  content: "\e932";
+}
+.icon-icono-balanceado:before {
+  content: "\e902";
+}
+.icon-icono-economico:before {
+  content: "\e904";
+}
+.icon-icono-rapido:before {
+  content: "\e906";
+}
+.icon-icono-historial:before {
+  content: "\e907";
+}
+.icon-icono-rutas:before {
+  content: "\e90a";
+}
+.icon-icono-conductor:before {
+  content: "\e90b";
+}
+.icon-icono-flotilla:before {
+  content: "\e90c";
+}
+.icon-icono-mapa:before {
+  content: "\e90d";
+}
+.icon-icono-mensaje:before {
+  content: "\e90e";
+}
+.icon-icono-reportes:before {
+  content: "\e90f";
+}
+.icon-destinos:before {
+  content: "\e910";
+}
+.icon-evitar:before {
+  content: "\e911";
+}
+.icon-programar:before {
+  content: "\e912";
+}
+.icon-ruta:before {
+  content: "\e913";
+}
+.icon-Tipo-de-transporte:before {
+  content: "\e914";
+}
+.icon-tipo-de-viaje:before {
+  content: "\e915";
+}
+.icon-destinos1:before {
+  content: "\e916";
+}
+.icon-evitar1:before {
+  content: "\e917";
+}
+.icon-programar1:before {
+  content: "\e918";
+}
+.icon-ruta1:before {
+  content: "\e919";
+}
+.icon-Tipo-de-transporte1:before {
+  content: "\e91a";
+}
+.icon-tipo-de-viaje1:before {
+  content: "\e91b";
+}
+.icon-icono-auto:before {
+  content: "\e91c";
+}
+.icon-icono-autobus:before {
+  content: "\e91d";
+}
+.icon-Icono-camion:before {
+  content: "\e91e";
+}
+.icon-icono-emergencia:before {
+  content: "\e91f";
+}
+.icon-icono-minimizar-ventana:before {
+  content: "\e920";
+}
+.icon-icono-motocicleta:before {
+  content: "\e921";
+}
+.icon-icono-peaton:before {
+  content: "\e922";
+}
+.icon-icono-tren:before {
+  content: "\e923";
+}
+.icon-keyboard_arrow_down:before {
+  content: "\e901";
+}
+.icon-pencil:before {
+  content: "\e933";
+}
+.icon-bin:before {
+  content: "\e900";
+}
+.icon-location:before {
+  content: "\e929";
+}
+.icon-search:before {
+  content: "\e908";
+}
+.icon-magnifier:before {
+  content: "\e908";
+}
+.icon-magnifying-glass:before {
+  content: "\e908";
+}
+.icon-inspect:before {
+  content: "\e908";
+}
+.icon-find:before {
+  content: "\e908";
+}
+.icon-plus:before {
+  content: "\e909";
+}
