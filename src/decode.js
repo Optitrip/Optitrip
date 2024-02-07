@@ -191,3 +191,5 @@ function encodeScaledValue(value) {
 
     return encodeUnsignedNumber(numVal);
 }
+
+export { decode, encode };

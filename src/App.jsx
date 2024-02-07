@@ -1,11 +1,21 @@
 import { useState, createContext, useEffect, useContext, useRef } from 'react'
 import './App.css'
 import './style.css'
-import * as here from './here.js'; 
+import {decode} from './decode.js';
+
 var API_KEY="IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng";
 const OpenModalContext = createContext(null);
+var plus_position=400;
 var avoid_zone_index=0;
 var avoid_zone_props=null;
+var colors=["#32a852", "#3285a8", "#8f4ad4", "#d44a8a"];
+const car = {name: "auto", icon: "icon-icono-auto", here_value: "car"};
+const tractorTruck = {name: "camion", icon: "icon-Icono-camion", here_value: "tractorTruck"};
+const truck = {name: "truck", icon: "icon-icono-autobus", here_value: "truck"};
+const train = {name: "train", icon: "icon-icono-tren", here_value: "train"};
+const emergency = {name: "emergency", icon: "icon-icono-emergencia", here_value: "emergency"};
+const motorcycle = {name: "motorcycle", icon: "icon-icono-motocicleta", here_value: "motorcycle"};
+const pedestrian = {name: "pedestrian", icon: "icon-icono-peaton", here_value: "pedestrian"};
 var default_state={
     created:false,
     modals_opened:[],
@@ -33,7 +43,9 @@ var default_state={
     score:0,
     modal_opened:false,
     modal_parameter_opened:"destinations_parameter",
-    ephemiral_marker:[]
+    ephemiral_marker:[],
+    show_results:false,
+    response:"",
 };
 var platform = new H.service.Platform({
     'apikey': 'IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng'
@@ -54,23 +66,30 @@ function moveMapToPlace(map,lat,lon){
     map.setCenter({lat: lat,lng: lon});
     map.setZoom(18);
 }  
-
+function addPolylineToMap(map, poly, color) {
+  var lineString = new H.geo.LineString();
+  poly["polyline"].forEach(coordinates=>{
+    lineString.pushPoint({lat:coordinates[0], lng:coordinates[1]});
+  })
+  let polyline=new H.map.Polyline(
+    lineString, { style: { lineWidth: 5, strokeColor:color}}
+  )
+  map.addObject(polyline);
+  lines.push(polyline)
+}
 export default function App(props) {
     const[state, setState]=useState(default_state)
     useEffect(() => {
-        map.addEventListener('contextmenu', handleContextMenu, false);
+        map.addEventListener('contextmenu', handleContextMenu);
         return () => {
-            map.removeEventListener('contextmenu', handleContextMenu, false);
+            map.removeEventListener('contextmenu', handleContextMenu);
         };
-        
-        
     }, [map]);
     const handleContextMenu = (ev) => {
         if(confirm("¿Deseas agregar este punto a tu ruta?")){
             var pos = map.screenToGeo(ev.viewportX, ev.viewportY);
             addToDestinations(map, pos.lat, pos.lng);
         }
-
     };
     const openModal = (modal_opened, modal_parameter_opened=state.modal_parameter_opened) => {
         setState(prevState => ({ ...prevState, modal_opened: modal_opened, modal_parameter_opened:modal_parameter_opened}));
@@ -217,20 +236,26 @@ export default function App(props) {
         }
             navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {maximumAge:60000, timeout:5000, enableHighAccuracy:true});    
     }
+    if(!state.show_results){
+        plus_position=0;
+    }
+    else{
+        plus_position=400;
+    }
     return (
         <div>
-            <div className="container clearfix" style={{zIndex:3, position:"absolute", top:70, left:200,margin:"10px", width:"500px"}}>
+            <div className="container clearfix" style={{zIndex:3, position:"absolute", top:70, left:200+plus_position,margin:"10px", width:"500px"}}>
             <SearchComponent state={state} setState={setState} userPosition={state.current_position} addToDestinations={addToDestinations} placeholder="Busca lugares" addPoint={false}/>
             </div>
-            <div className="circle-component" style={{zIndex:3, position:"absolute", top:70, left:90, margin:"10px"}}>
+            <div className="circle-component" style={{zIndex:3, position:"absolute", top:70, left:90+plus_position, margin:"10px"}}>
                 <i onClick={()=>state.created?"":createState()} className={`menu-parameters-icons icon-plus ${state.created?"bg-secondary":"bg-primary"}`}>
                 </i>
             </div>
-            <div className="circle-component" style={{zIndex:3, position:"absolute", top:130, left:90, margin:"10px"}}>
+            <div className="circle-component" style={{zIndex:3, position:"absolute", top:130, left:90+plus_position, margin:"10px"}}>
                 <span onClick={()=>state.created?openModal(true, "destinations_parameter"):""} className={`menu-parameters-icons icon-pencil ${state.created?"bg-primary":"bg-secondary"}`}>
                 </span>
             </div>
-            <div className="circle-component" style={{zIndex:3, position:"absolute", top:190, left:90, margin:"10px"}}>
+            <div className="circle-component" style={{zIndex:3, position:"absolute", top:190, left:90+plus_position, margin:"10px"}}>
                 <i onClick={()=>state.created?deleteState():""} className={`menu-parameters-icons icon-bin ${state.created?"bg-primary":"bg-secondary"}`}>
                 </i>
             </div>
@@ -378,9 +403,56 @@ function MiddleModal(props) {
                 }
                 break;
             case 5:
-                if (props.state.destinations.length<2||props.state.transportation==""||props.state.mode=="") {
-                    alert("Escoge  una forma de viaje")
-                    return;
+                if (props.state.destinations.length>=2||props.state.transportation!=""||props.state.mode!="") {
+                    let departure_time_content=`&${props.state.time_type}=${props.state.time}:30`;
+                    let avoid_content="&avoid[features]=";
+                    props.state.avoid_parameters.forEach(element=>{
+                    avoid_content+=`${element},`;
+                    })
+                    avoid_content=""
+                    departure_time_content=""
+                    let vias=``;
+                    for (let index = 0; index < props.state.destinations.length; index++) {
+                        console.log(props.state.destinations[index])
+                        if(index!=0&&index!=props.state.destinations.length-1){
+                            vias+=`&via=${props.state.destinations[index].string};`;
+                        }
+                    }
+                    fetch(`https://router.hereapi.com/v8/routes?apikey=IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng&lang=es&origin=${props.state.destinations[0].string}&destination=${props.state.destinations[props.state.destinations.length-1].string}&RoutingType=${props.state.mode}&return=polyline%2Csummary%2Cactions%2Cinstructions%2Ctolls&transportMode=${props.state.transportation}${departure_time_content}${avoid_content}${vias}&alternatives=3`)
+                        .then(response => {
+                            if (response.status==400) {
+                            alert("No se puede hacer lo solicitado por los datos")
+                            return
+                            }
+                            response.json()
+                            .then(info => {
+                                console.log(info)
+                                let div=document.querySelector("#show_routes_div");
+                                div.style.display="flex";
+                                document.querySelector("#map").style.width="calc(100% - 500px)";
+                                div.querySelector("#show_routes_from_destinations").innerText=props.state.destinations[0].name;
+                                div.querySelector("#show_routes_to_destinations").innerText=props.state.destinations[props.state.destinations.length-1].name;
+                                div.querySelector("#show_routes_stops").innerText=props.state.destinations.length-2;
+                                div.querySelector("#show_routes_transportation").innerText=props.state.transportation;
+                                openModal(false);
+                                props.setState(prevState => ({ ...prevState, response:info, show_results:true}));
+                                for(let index=0; index<=info["routes"].length-1;index++){
+                                    let data=info["routes"][0]["sections"][0];
+                                    console.log(info["routes"][index]["sections"])
+                                    info["routes"][index]["sections"].forEach(section=>{
+                                        console.log("section")
+                                        console.log(section.polyline)
+                                        var polyline = section.polyline;
+                                        let y=decode(polyline);
+                                        addPolylineToMap(map, y, colors[index]);
+                                        // section["actions"].forEach(element=>{
+                                        // instructions+=`<li>${element["instruction"]}</li>`
+                                        // })
+                                    })
+                                }
+                                return;
+                        })
+                    })
                 }
                 break;
             default:
@@ -475,10 +547,10 @@ function DestinationsModal(props) {
                 marker_color = "text-danger";
             }
             destinations.push(
-                <div onDragEnd={()=>handleMouseUp(event,index)} draggable style={{ display: "flex", cursor: "grab",  alignItems: "center", marginBottom: "15px" }}>
+                <div key={`destination-${index}`} onDragEnd={()=>handleMouseUp(event,index)} draggable style={{ display: "flex",  alignItems: "center", marginBottom: "15px" }}>
                     <i className={`icon-location m-1 ${marker_color}`} style={{ fontSize: 30 }}></i>
-                    <button className='btn btn-light'>
-                        <i className="fa-solid fa-grip text-secondary" style={{ fontSize: 25}}></i>
+                    <button className='btn btn-light' style={{cursor:"grab"}}>
+                        <i className="icon-mover-rutas text-secondary" style={{ fontSize: 25, margin:0}}></i>
                     </button>
                     <div className="btn btn-light border-dark m-1 d-flex align-items-center">
                     <p style={{width:"calc(100% - 36px)", height:20, overflow:"hidden", margin:0}}>{props.state.destinations[index].name}</p>
@@ -502,13 +574,6 @@ function DestinationsModal(props) {
 }
 
 function TransportationModal(props) {
-    const car="car";
-    const tractorTruck="tractorTruck";
-    const truck="truck";
-    const train="train";
-    const emergency="emergency";
-    const motorcycle="motorcycle";
-    const pedestrian="pedestrian";
     const type_of_truck_trailer="Trailer";
     const type_of_truck_rigid="Rigido";
     const two_axles="two_axle";
@@ -541,40 +606,46 @@ function TransportationModal(props) {
     return(
         <div>
         <div style={{display:"flex", justifyContent:"space-between"}}>
-            <div onClick={()=>updateTransportation(car)} className={`btn transport-vehicles ${props.state.transportation==car?"btn-primary":""}`}>
-            <i className='icon-icono-auto display-4'></i>
-            <p>Auto</p>
-            </div>
-            <div onClick={()=>updateTransportation(motorcycle)} className={`btn transport-vehicles ${props.state.transportation==motorcycle?"btn-primary":""}`}>
-            <i className='icon-icono-motocicleta display-4'></i>            <p>Motocicleta</p>
-            </div>
-            <div onClick={()=>updateTransportation(tractorTruck)} className={`btn transport-vehicles ${props.state.transportation==tractorTruck?"btn-primary":""}`}>
-            <i className='icon-Icono-camion display-4'></i>            <p>Camión</p>
+        <div onClick={()=>updateTransportation(car.here_value)} className={`btn transport-vehicles ${props.state.transportation==car.here_value?"btn-primary":""}`}>
+            <i className={`${car.icon} display-4`}></i>
+            <p>{car.name}</p>
         </div>
-            <div onClick={()=>updateTransportation(truck)} className={`btn transport-vehicles ${props.state.transportation==truck?"btn-primary":""}`}>
-            <i className='icon-icono-autobus display-4'></i>            <p>Autobus</p>
+        <div onClick={()=>updateTransportation(motorcycle.here_value)} className={`btn transport-vehicles ${props.state.transportation==motorcycle.here_value?"btn-primary":""}`}>
+            <i className={`${motorcycle.icon} display-4`}></i>
+            <p>{motorcycle.name}</p>
         </div>
-            <div onClick={()=>updateTransportation(train)} className={`btn transport-vehicles ${props.state.transportation==train?"btn-primary":""}`}>
-            <i className='icon-icono-tren display-4'></i>            <p>Tren</p>
-            </div>
-            <div onClick={()=>updateTransportation(emergency)} className={`btn transport-vehicles ${props.state.transportation==emergency?"btn-primary":""}`}>
-            <i className='icon-icono-emergencia display-4'></i>            <p>Emergencias</p>
+        <div onClick={()=>updateTransportation(tractorTruck.here_value)} className={`btn transport-vehicles ${props.state.transportation==tractorTruck.here_value?"btn-primary":""}`}>
+            <i className={`${tractorTruck.icon} display-4`}></i>
+            <p>{tractorTruck.name}</p>
         </div>
-            <div onClick={()=>updateTransportation(pedestrian)} className={`btn transport-vehicles ${props.state.transportation==pedestrian?"btn-primary":""}`}>
-            <i className='icon-icono-peaton display-4'></i>            <p>Peaton</p>
+        <div onClick={()=>updateTransportation(truck.here_value)} className={`btn transport-vehicles ${props.state.transportation==truck.here_value?"btn-primary":""}`}>
+            <i className={`${truck.icon} display-4`}></i>
+            <p>{truck.name}</p>
+        </div>
+        <div onClick={()=>updateTransportation(train.here_value)} className={`btn transport-vehicles ${props.state.transportation==train.here_value?"btn-primary":""}`}>
+            <i className={`${train.icon} display-4`}></i>
+            <p>{train.name}</p>
+        </div>
+        <div onClick={()=>updateTransportation(emergency.here_value)} className={`btn transport-vehicles ${props.state.transportation==emergency.here_value?"btn-primary":""}`}>
+            <i className={`${emergency.icon} display-4`}></i>
+            <p>{emergency.name}</p>
+        </div>
+        <div onClick={()=>updateTransportation(pedestrian.here_value)} className={`btn transport-vehicles ${props.state.transportation==pedestrian.here_value?"btn-primary":""}`}>
+            <i className={`${pedestrian.icon} display-4`}></i>
+            <p>{pedestrian.name}</p>
         </div>
         </div>
-        <div style={{pointerEvents: `${props.state.transportation=="tractorTruck"?"":"none"}`, opacity:`${props.state.transportation=="tractorTruck"?1:.5}`}}>
+        <div style={{pointerEvents: `${props.state.transportation==tractorTruck.here_value?"":"none"}`, opacity:`${props.state.transportation==tractorTruck.here_value?1:.5}`}}>
         <div className='border border-dark shadow mt-3 rounded p-1 d-flex align-items-center text-center'>
             <div style={{float:"left", width:"50%"}}>
             <h5>Tipo de camión:</h5>
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
-                <div onClick={()=>updateTypeOfTruck(type_of_truck_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.type_of_truck==type_of_truck_trailer?"text-primary":""}`}>
+                <div onClick={()=>updateTypeOfTruck(type_of_truck_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.type_of_truck==type_of_truck_trailer?"text-primary":""}`}>
                     <i className='icon-Trailer' style={{fontSize:30}}></i>
                     Trailer
                     </div>
-                <div onClick={()=>updateTypeOfTruck(type_of_truck_rigid)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.type_of_truck==type_of_truck_rigid?"text-primary":""}`}>
+                <div onClick={()=>updateTypeOfTruck(type_of_truck_rigid)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.type_of_truck==type_of_truck_rigid?"text-primary":""}`}>
                     <i className='icon-rigido'></i>
                     Rígido
                     </div>
@@ -586,32 +657,32 @@ function TransportationModal(props) {
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
                 <div style={{width:"50%"}}>
-                     <div onClick={()=>updateNumberOfAxles(two_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.number_of_axles==two_axles?"text-primary":""}`}>
+                     <div onClick={()=>updateNumberOfAxles(two_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==two_axles?"text-primary":""}`}>
                     <i className="icon-eje1"></i>
                     (2)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(three_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.number_of_axles==three_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(three_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==three_axles?"text-primary":""}`}>
                     <i className="icon-eje2"></i>
                     (3)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(four_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.number_of_axles==four_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(four_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==four_axles?"text-primary":""}`}>
                 <i className="icon-eje3"></i>                    (4)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(five_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.number_of_axles==five_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(five_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==five_axles?"text-primary":""}`}>
                 <i className="icon-eje4"></i>                    (5)
                 </div>
                 </div>
                <div style={{width:"50%"}}>
-                <div onClick={()=>updateNumberOfAxles(six_axles)} className={`col btn m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck&&props.state.number_of_axles==six_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(six_axles)} className={`col btn m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==six_axles?"text-primary":""}`}>
                 <i className="icon-eje5 mr-1" style={{fontSize:21}}></i>                    (6)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(seven_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck&&props.state.number_of_axles==seven_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(seven_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==seven_axles?"text-primary":""}`}>
                 <i className="icon-eje6 mr-1" style={{fontSize:30}}></i>                    (7)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(eight_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck&&props.state.number_of_axles==eight_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(eight_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==eight_axles?"text-primary":""}`}>
                 <i className="icon-eje7 mr-1" style={{fontSize:30}}></i>                    (8)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(nine_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck&&props.state.number_of_axles==nine_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(nine_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==nine_axles?"text-primary":""}`}>
                 <i className="icon-eje8 mr-1" style={{fontSize:30}}></i>                    (9)
                 </div>
                </div>
@@ -622,11 +693,11 @@ function TransportationModal(props) {
             <h5>Tipo de remolque:</h5>
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
-                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.type_of_trailer==type_of_trailer_trailer?"text-primary":""}`}>
+                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.type_of_trailer==type_of_trailer_trailer?"text-primary":""}`}>
                     <i className="icon-Remolque"></i>
                     Remolque
                     </div>
-                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_caravan)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.type_of_trailer==type_of_trailer_caravan?"text-primary":""}`}>
+                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_caravan)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.type_of_trailer==type_of_trailer_caravan?"text-primary":""}`}>
                     <i className="icon-caravan" style={{fontSize:30}}></i>
                     Caravan
                     </div>
@@ -637,11 +708,11 @@ function TransportationModal(props) {
             <h5>Número de remolques:</h5>
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
-                <div onClick={()=>updateNumberOfTrailers(number_of_trailers_simple)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.number_of_trailers==number_of_trailers_simple?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfTrailers(number_of_trailers_simple)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_trailers==number_of_trailers_simple?"text-primary":""}`}>
                     <i className="icon-simple"></i>
                     Simple
                     </div>
-                <div onClick={()=>updateNumberOfTrailers(number_of_trailers_double)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck&&props.state.number_of_trailers==number_of_trailers_double?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfTrailers(number_of_trailers_double)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_trailers==number_of_trailers_double?"text-primary":""}`}>
                     <i className="icon-doble-remolque"></i>
                     Doble
                     </div>
@@ -653,11 +724,11 @@ function TransportationModal(props) {
 }
 
 function ModeModal(props) {
-    var fast="rapido";
-    var short="corto";
-    var balanced="balanceado";
-    var economic="economico";
-    var landscaper="paisajista";
+    var fast="fastest";
+    var short="shortest";
+    var balanced="balanced";
+    var economic="economic";
+    var landscaper="scenic";
     const updateMode=(mode)=>{
         props.setState(prevState => ({ ...prevState, mode: mode}));
     }  
@@ -704,12 +775,24 @@ const handleAvoidZoneClick = (ev) => {
             
         }
         console.log(zone.name)
+        var icono=new H.map.Marker({lat:pos.lat, lng:pos.lng, }, {
+            volatility: true,
+            icon:new H.map.Icon(`<svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100" height="100" viewBox="0 0 100 100" style="enable-background:new 0 0 100 100;" xml:space="preserve">
+            <g>
+                <g xmlns="http://www.w3.org/2000/svg">
+                    <path d="M 10 10 H 90 V 90 H 10 L 10 10" style="fill:rgb(240, 240, 240);stroke-width:3;stroke:grey"/>
+                </g>
+            </g>
+            </svg>`, {size: {w: 15, h: 15}})
+        });
+        map.addObject(icono);
+        zone.icons.push(icono);
         zone.points.push([pos.lat, pos.lng]);
         zone.LineString.pushPoint({lat:pos.lat,lng:pos.lng});
         var polygon= new H.map.Polygon(zone.LineString, {
             style: {
-            fillColor: '#ee0000',
-            strokeColor: '#FF0000',
+            fillColor: 'rgba(250, 0, 0, .4)',
+            strokeColor: 'rgba(250, 0, 0, .4)',
             lineWidth: 4
             }
         })
@@ -739,7 +822,6 @@ function AvoidModal(props) {
             avoid_highways.splice(avoid_highways.indexOf(value), 1);
         }
         props.setState(prevState => ({ ...prevState, avoid_highways: avoid_highways}));
-
     }
     var parameters={
         evitar:{
@@ -753,10 +835,10 @@ function AvoidModal(props) {
     }
     const makeParameters=(key)=>{
         var parameters_html=[];
-        var avoid_list=key=="evitar"?props.state.avoid_parameters:props.state.avoid_highways;
+        var avoid_list= key=="evitar"?props.state.avoid_parameters:props.state.avoid_highways;
         for (let index = 0; index < parameters[key].parameters.length; index++) {
             parameters_html.push(
-                <div style={{display:"flex", alignContent:"center", margin:"5px", width:300, fontSize:15}}>
+                <div key={`${key}-${index}`} style={{display:"flex", alignContent:"center", margin:"5px", width:300, fontSize:15}}>
                     <button style={{height:30, borderRadius:"10px 0 0 10px", minWidth:40}} className={`btn m-0 p-0 ${avoid_list.includes(parameters[key].parameters[index])?"btn-secondary":"btn-danger"}`} onClick={()=>parameters[key].onClickFunction(parameters[key].parameters[index],false)}>No</button>
                     <button style={{height:30, borderRadius:"0px 10px 10px 0px", minWidth:40}} className={`btn m-0 mr-1 p-0 ${avoid_list.includes(parameters[key].parameters[index])?"btn-success":"btn-secondary"}`} onClick={()=>parameters[key].onClickFunction(parameters[key].parameters[index],true)}>Si</button>
                     <h5 className="m-0">
@@ -776,12 +858,11 @@ function AvoidModal(props) {
         if (index==-1) {
             var line=new H.geo.LineString();
             var polygon= null;
-            zones.push({name:`Zona ${zones.length}`, points:[], LineString:line, polygon:polygon, color:"#ee0000"});
+            zones.push({name:`Zona ${zones.length}`, points:[], LineString:line, polygon:polygon, color:"rgba(250, 0, 0, .4)", icons:[]});
             index=zones.length-1;
         }
         props.setState(prevState => ({ ...prevState, avoid_zones:zones, edit_avoid_zone:index, avoid_zone_event_listener:true}));
         openModal(false);
-        console.log(map)
         avoid_zone_index=index;
         avoid_zone_props=props;
         document.querySelector("#avoid_zone_name").value="";
@@ -793,6 +874,7 @@ function AvoidModal(props) {
     const eliminateZone=(index)=>{
         var avoid_zones=props.state.avoid_zones;
         map.removeObject(avoid_zones[index].polygon);
+        map.remoceObjects(avoid_zones[index].icons);
         avoid_zones.splice(index, 1);
         props.setState(prevState => ({ ...prevState, avoid_zones: avoid_zones}));
     }
@@ -801,7 +883,7 @@ function AvoidModal(props) {
         for (let index = 0; index < props.state.avoid_zones.length; index++) {
             zones_html.push(
                 <div style={{ display: "flex", alignItems: "center", marginBottom: "15px", width:"100%"}}>
-                    <div style={{width:"calc(100% - 36px)"}} className="btn btn-light border-dark m-1 d-flex align-items-center shadow">
+                    <div style={{backgroundColor:"transparent",width:"calc(100% - 36px)"}} className="btn btn-light m-1 d-flex align-items-center shadow">
                         <p style={{minHeight:"100%", height:20, overflow:"hidden", margin:0}}>{props.state.avoid_zones[index].name}</p>
                     </div>
                     <button className="btn btn-light border rounded ml-1" onClick={() => eliminateZone(index)}><strong>X</strong></button>
@@ -825,7 +907,7 @@ function AvoidModal(props) {
             <div>
                 <h5>Dibujar área</h5>
                 <div style={{ marginBottom: "15px", float:"right", marginTop:"-40px"}}>
-                    <button className="btn btn-light border rounded ml-1" onClick={() => editZone(-1)}><strong>Nuevo +</strong></button>
+                    <button className="btn btn-light border rounded ml-1" onClick={() => editZone(-1)}><strong>Nuevo <i className="icon-icono-agregar"></i></strong></button>
                 </div>
                 <div style={{display:"flex",justifyContent:"center", flexDirection:"column",alignContent:"space-around", width:"100%"}}>
                     {avoid_zones()}
@@ -842,9 +924,9 @@ function SideModal(props) {
     useEffect(() => {
         past_zone=props.state.avoid_zones[props.state.edit_avoid_zone];
     }, [])
-    var zone={"name":"", "color":"", "points":""}
+    var zone={"name":"", "color":"", "points":""};
     if(props.state.avoid_zones.length>props.index){
-        zone=props.state.avoid_zones[props.index]
+        zone=props.state.avoid_zones[props.index];
     }
     var name=zone.name;
     const saveZone=(zone,save)=>{
@@ -865,10 +947,9 @@ function SideModal(props) {
             zone.color=color;
         }
         else{
-            console.log(zone)
             map.removeObject(zone.polygon);
+            map.removeObjects(zone.icons);
             zones.splice(props.index, 1);
-            console.log(zones)
         }
         props.setState(prevState => ({ ...prevState, avoid_zones: zones, avoid_zone_event_listener:false}));
         openModal(true, "avoid_parameter")
@@ -885,13 +966,21 @@ function SideModal(props) {
         }catch{}
         return points;
     }
+    function hexToRgb(hex) {
+        var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+        return result ? `rgba(${parseInt(result[1], 16)},${parseInt(result[2], 16)},${parseInt(result[3], 16)},0.4)`
+        : null;
+      }
     const changeInColor=(event)=>{
-        setColor(event.target.value);
+        let color=event.target.value;
+        color=hexToRgb(color);
+        console.log(color)
+        setColor(color);
         map.removeObject(zone.polygon)
         var polygon= new H.map.Polygon(zone.LineString, {
             style: {
-            fillColor: `${event.target.value}`,
-            strokeColor: `${event.target.value}`,
+            fillColor: `${color}`,
+            strokeColor: `${color}`,
             lineWidth: 4,
             strokeOpacity: 0.1,
             fillOpacity: 0.1
@@ -920,7 +1009,7 @@ function SideModal(props) {
                 </div>
             </div>
             <div className='d-flex justify-content-center align-items-center'>
-                <button className='btn btn-danger m-1 btn-block' onClick={()=>saveZone(zone,false)}>Eliminar</button>
+                <button className='btn btn-secondary m-1 btn-block' onClick={()=>saveZone(zone,false)}>Cancelar</button>
                 <button className='btn btn-primary m-1 btn-block' onClick={()=>saveZone(zone,true)}>Guardar</button>
             </div>
         </div>

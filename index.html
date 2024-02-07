@@ -13,7 +13,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
     <script src="/src/decode.js" defer></script>
-    <script src="/src/luxon.js" defer></script>
     <script src="/src/here.js" defer></script>
     <title>OptiTrip</title>
   </head>
@@ -68,7 +67,28 @@
           <i class="icon-icono-historial" style="font-size: 50px;"></i>
           <strong>Historial</strong></button>
       </div>
-      <div id="map" style="width: calc(100vw - 100px); height:calc(100vh - 70px);overflow: hidden; float:left"></div>
+      <div id="show_routes_div" style="width: 400px; height:100vh; display: none; flex-direction: column; padding:10px;border-radius: 10px;">
+        <h3 style="font-weight:bold; text-decoration: underline;text-align:center;">Resultados de la ruta</h3>
+        <div><strong>Origen</strong> <span id="show_routes_from_destinations">Ibero Leon</span></div>
+        <div><strong>Destino</strong> <span id="show_routes_to_destinations">Ibero Leon</span></div>
+        <div><strong>Paradas</strong> <span id="show_routes_stops">0</span></div>
+        <div><strong>Vehículo</strong> <span id="show_routes_transportation">Automovil</span></div>
+        <div style="padding:10px; margin:10px; border:1px black solid;">
+          <div><strong style="color:#007BFF; text-decoration: underline;">Opcion #1</strong><i style="float:right;font-size: 30px;" class="icon-icono-auto"></i></div>
+          <div style="display:flex; width:340px">
+            <div style="width:100%">
+              <span id="show_routes_directions">Boulevard </span>
+            </div>
+            <div style="float: right; display:flex; flex-direction: column; width:75px;text-align: right;">
+              <strong id="show_routes_time" style="color:green;">14 min</strong>
+              <strong id="show_routes_distance">4.9 km</strong>
+              <strong id="show_routes_money">$0.00 </strong>
+            </div>
+          </div>
+          <p style="color:#007BFF; cursor:pointer; text-decoration: underline; margin:0px">Indicaciones</p>
+        </div>
+      </div>
+      <div id="map" style="width: calc(100vw - 100px); height:calc(100vh - 70px);overflow: hidden; float:left; position:relative"></div>
     </div>
     </div>
     <script type="module" src="/src/main.jsx"></script>
