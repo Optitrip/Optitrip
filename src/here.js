@@ -11,8 +11,33 @@
 //   var avoid="";
 //   var index_page=0;
 //   var colors=["#32a852", "#3285a8", "#8f4ad4", "#d44a8a"];
+var indicaciones=[];
 
-  
+const crearIndicaciones=(index)=>{
+    // [show_instructions_time,show_instructions_distance,show_intructions_money,show_instructions_0,show_instructions_to,show_instructions_all,]
+    // [show_instructions_from]
+    let div=document.querySelector("#show_routes_div");
+    div.style.display="none";
+    let div_instructions=document.querySelector("#show_instructions_div");
+    div_instructions.style.display="flex";
+    div_instructions.querySelector("#show_instructions_from").innerText=indicaciones[index].from.name;
+    div_instructions.querySelector("#show_instructions_to").innerText=indicaciones[index].to.name;
+    div_instructions.querySelector("#show_instructions_all").innerHTML="";
+    indicaciones[index].instructions.forEach(instruction=>{
+        div_instructions.querySelector("#show_instructions_all").innerHTML+=`<li>${instruction}</li>`;
+    })
+    div_instructions.querySelector("#show_instructions_time").innerText=`${indicaciones[index].minutes} min`;
+    div_instructions.querySelector("#show_instructions_distance").innerText=`${indicaciones[index].distance} km`;
+    div_instructions.querySelector("#show_instructions_money").innerText=`$${indicaciones[index].tolls_total}`;
+    div_instructions.querySelector("#show_instructions_0").innerText=indicaciones[index].instructions[0];
+}
+
+const returnToRoutes=()=>{
+    let div_instructions=document.querySelector("#show_instructions_div");
+    div_instructions.style.display="none";
+    let div_routes=document.querySelector("#show_routes_div");
+    div_routes.style.display="flex";
+}
 //   var platform = new H.service.Platform({
 //     'apikey': 'IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng'
 //   });

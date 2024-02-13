@@ -26,6 +26,7 @@
   position: fixed; /* Stay in place */
   z-index: 4; /* Sit on top */
   top: 0;
+  left:0;
   width: 100vw; /* Full width */
   height: 100vh; /* Full height */
   background-color: #30303030;

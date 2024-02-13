@@ -67,26 +67,37 @@
           <i class="icon-icono-historial" style="font-size: 50px;"></i>
           <strong>Historial</strong></button>
       </div>
-      <div id="show_routes_div" style="width: 400px; height:100vh; display: none; flex-direction: column; padding:10px;border-radius: 10px;">
+      <div id="show_routes_div" style="width: 400px; height:100vh; display: none; flex-direction: column; padding:10px;border-radius: 10px; ">
         <h3 style="font-weight:bold; text-decoration: underline;text-align:center;">Resultados de la ruta</h3>
         <div><strong>Origen</strong> <span id="show_routes_from_destinations">Ibero Leon</span></div>
         <div><strong>Destino</strong> <span id="show_routes_to_destinations">Ibero Leon</span></div>
         <div><strong>Paradas</strong> <span id="show_routes_stops">0</span></div>
         <div><strong>Vehículo</strong> <span id="show_routes_transportation">Automovil</span></div>
-        <div style="padding:10px; margin:10px; border:1px black solid;">
-          <div><strong style="color:#007BFF; text-decoration: underline;">Opcion #1</strong><i style="float:right;font-size: 30px;" class="icon-icono-auto"></i></div>
-          <div style="display:flex; width:340px">
-            <div style="width:100%">
-              <span id="show_routes_directions">Boulevard </span>
-            </div>
-            <div style="float: right; display:flex; flex-direction: column; width:75px;text-align: right;">
-              <strong id="show_routes_time" style="color:green;">14 min</strong>
-              <strong id="show_routes_distance">4.9 km</strong>
-              <strong id="show_routes_money">$0.00 </strong>
-            </div>
-          </div>
-          <p style="color:#007BFF; cursor:pointer; text-decoration: underline; margin:0px">Indicaciones</p>
+        <div id="add_routes" style="height: 510px;overflow: auto;">
         </div>
+        <div>
+          <button id="show_routes_edit" class="btn btn-lg btn-secondary m-2">Editar</button>
+          <button id="show_routes_end" class="btn btn-lg btn-danger m-2 float-right">Finalizar</button>
+        </div>
+      </div>
+      <div id="show_instructions_div" style="width: 400px; height:100vh; display: none; flex-direction: column; padding:10px;border-radius: 10px; ">
+        <h3 style="font-weight:bold; text-decoration: underline;text-align:center;">Resultados de la ruta</h3>
+        
+        <div style="padding: 10px; margin: 10px; border: 1px black solid; height:100px">
+          <div style="display: flex; justify-content: space-around;font-weight: 700;">
+              <span id="show_instructions_time" style="color: green;">ass</span>
+              <span id="show_instructions_distance">dsa</span>
+              <span id="show_instructions_money">dsas</span>
+          </div>
+          <p id="show_instructions_0">Indicacion</p>
+        </div>
+        
+        <h5 id="show_instructions_to" style="font-weight:bold;text-align:center;">destino</h5>
+        <ul id="show_instructions_all" style="height: 400px;overflow: auto;">
+          <li>instrucciones</li>
+        </ul>
+        <h5 id="show_instructions_from" style="font-weight:bold;text-align:center;">DE donde partes</h5>
+        <button class="btn btn-primary" onclick="returnToRoutes()">Atras</button>
       </div>
       <div id="map" style="width: calc(100vw - 100px); height:calc(100vh - 70px);overflow: hidden; float:left; position:relative"></div>
     </div>

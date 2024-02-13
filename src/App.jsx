@@ -8,14 +8,16 @@ const OpenModalContext = createContext(null);
 var plus_position=400;
 var avoid_zone_index=0;
 var avoid_zone_props=null;
-var colors=["#32a852", "#3285a8", "#8f4ad4", "#d44a8a"];
-const car = {name: "auto", icon: "icon-icono-auto", here_value: "car"};
-const tractorTruck = {name: "camion", icon: "icon-Icono-camion", here_value: "tractorTruck"};
-const truck = {name: "truck", icon: "icon-icono-autobus", here_value: "truck"};
-const train = {name: "train", icon: "icon-icono-tren", here_value: "train"};
-const emergency = {name: "emergency", icon: "icon-icono-emergencia", here_value: "emergency"};
-const motorcycle = {name: "motorcycle", icon: "icon-icono-motocicleta", here_value: "motorcycle"};
-const pedestrian = {name: "pedestrian", icon: "icon-icono-peaton", here_value: "pedestrian"};
+var colors=["#00BD2A", "#FB8800", "#FF0000", "#d44a8a","#32a852", "#3285a8", "#8f4ad4", "#d44a8a"];
+// train emergency 
+const car = {name: "Auto", icon: "icon-icono-auto", here_value: "car"};
+const tractorTruck = {name: "Camion", icon: "icon-Icono-camion", here_value: "truck"};
+const truck = {name: "Autobús", icon: "icon-icono-autobus", here_value: "truck"};
+const train = {name: "Tren", icon: "icon-icono-tren", here_value: "train"};
+const emergency = {name: "Emergencias", icon: "icon-icono-emergencia", here_value: "emergency"};
+const motorcycle = {name: "Motocicleta", icon: "icon-icono-motocicleta", here_value: "scooter"};
+const pedestrian = {name: "Peaton", icon: "icon-icono-peaton", here_value: "pedestrian"};
+const transportation ={"car":car, "tractorTruck":tractorTruck, "truck":truck, "train":train, "emergency":emergency, "scooter":motorcycle, "pedestrian":pedestrian};
 var default_state={
     created:false,
     modals_opened:[],
@@ -25,10 +27,10 @@ var default_state={
     },
     destinations:[],
     transportation:"",
-    type_of_truck:"Trailer",
-    number_of_axles:"two_axle",
+    type_of_truck:"tractor",
+    number_of_axles:"2",
     type_of_trailer:"Remolque",
-    number_of_trailers:"Simple",
+    number_of_trailers:"1",
     time:"",
     time_type:"Salir ahora",
     mode:"",
@@ -66,21 +68,31 @@ function moveMapToPlace(map,lat,lon){
     map.setCenter({lat: lat,lng: lon});
     map.setZoom(18);
 }  
-function addPolylineToMap(map, poly, color) {
-  var lineString = new H.geo.LineString();
-  poly["polyline"].forEach(coordinates=>{
-    lineString.pushPoint({lat:coordinates[0], lng:coordinates[1]});
-  })
-  let polyline=new H.map.Polyline(
-    lineString, { style: { lineWidth: 5, strokeColor:color}}
-  )
-  map.addObject(polyline);
-  lines.push(polyline)
+const crearIndicaciones=(index)=>{
+    // [show_instructions_time,show_instructions_distance,show_intructions_money,show_instructions_0,show_instructions_to,show_instructions_all,]
+    // [show_instructions_from]
+    let div=document.querySelector("#show_routes_div");
+    div.style.display="none";
+    let div_instructions=document.querySelector("#show_instructions_div");
+    div_instructions.style.display="flex";
+    div_instructions.querySelector("#show_instructions_from").innerText=indicaciones[index].from.name;
+    div_instructions.querySelector("#show_instructions_to").innerText=indicaciones[index].to.name;
+    div_instructions.querySelector("#show_instructions_all").innerHTML="";
+    indicaciones[index].instructions.forEach(instruction=>{
+        div_instructions.querySelector("#show_instructions_all").innerHTML+=`<li>${instruction}</li>`;
+    })
+    div_instructions.querySelector("#show_instructions_time").innerText=indicaciones[index].minutes;
+    div_instructions.querySelector("#show_instructions_distance").innerText=indicaciones[index].distance;
+    div_instructions.querySelector("#show_instructions_money").innerText=indicaciones[index].tolls_total;
+    div_instructions.querySelector("#show_instructions_0").innerText=indicaciones[index].instructions[0];
 }
 export default function App(props) {
     const[state, setState]=useState(default_state)
     useEffect(() => {
         map.addEventListener('contextmenu', handleContextMenu);
+        document.querySelector("#show_routes_end").addEventListener("click", ()=>{
+            window.location.reload();
+        });
         return () => {
             map.removeEventListener('contextmenu', handleContextMenu);
         };
@@ -220,6 +232,7 @@ export default function App(props) {
                 ephemiral_marker:[marker]
             })
         }, 1000);
+        console.log(position.coords.accuracy)
     };
     const errorCallback = (error) => {
         setState(prevState => ({ ...prevState, current_position: {lat:-1, lng:-1} }));
@@ -234,7 +247,7 @@ export default function App(props) {
             map.setZoom(18);
             setState(prevState => ({ ...prevState, current_position: {lat:current_position.lat, lng:current_position.lng} }));
         }
-            navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {maximumAge:60000, timeout:5000, enableHighAccuracy:true});    
+            navigator.geolocation.getCurrentPosition(successCallback, errorCallback, {maximumAge:0, timeout:5000, enableHighAccuracy:true});    
     }
     if(!state.show_results){
         plus_position=0;
@@ -279,6 +292,9 @@ function SearchComponent(props) {
             ...search,
             query:event.target.value
         })
+        if(event.key=="Enter"){
+            searchApi();
+        }
     }
     function showPlace(addPoint, lat, lng){
         moveMapToPlace(map,lat,lng);
@@ -316,16 +332,17 @@ function SearchComponent(props) {
         })
     }
     function searchApi(){
+        
         var fetch_link="";
         fetch_link=`https://discover.search.hereapi.com/v1/discover?at=${props.userPosition.lat},${props.userPosition.lng}&lang=es&q=${search.query}&apiKey=${API_KEY}`;
         fetch(fetch_link)
         .then(response => response.json())
         .then(data=>{
             let places=[];
-            let n=0
+            let n=0;
             data["items"].forEach(place=>{
                 places.push(
-                    <button className="btn btn-light border m-1" onClick={()=>showPlace(props.addPoint, place.position.lat, place.position.lng)}>
+                    <button key={`search-place-${n}`} className="btn btn-light border m-1" onClick={()=>showPlace(props.addPoint, place.position.lat, place.position.lng)}>
                     {place.address.label}
                     </button>
                 );
@@ -363,7 +380,8 @@ function SearchComponent(props) {
 
 function MiddleModal(props) {
     const [modal, setModal]=useState({
-        index:0,
+        lines:[],
+        index:0
     })
     const modals={
         "destinations_parameter":["CREACIÓN DE RUTA","Agregar destinos",<DestinationsModal setState={props.setState} state={props.state} addToDestinations={props.addToDestinations} changeDestination={props.changeDestination} createMarker={props.createMarker}/>],
@@ -374,6 +392,19 @@ function MiddleModal(props) {
         "route_parameter":["TIPO DE VIAJE","¿Cuándo quieres llegar?",<TimeModal setState={props.setState} state={props.state}/>]
     }
     const openModal = useContext(OpenModalContext);
+    function addPolylineToMap(map, poly, color) {
+        var lineString = new H.geo.LineString();
+        poly["polyline"].forEach(coordinates=>{
+          lineString.pushPoint({lat:coordinates[0], lng:coordinates[1]});
+        })
+        let polyline=new H.map.Polyline(
+          lineString, { style: { lineWidth: 5, strokeColor:color}}
+        )
+        map.addObject(polyline);
+        let lines= modal.lines;
+        lines.push(polyline);
+        setModal(prevState => ({ ...prevState, lines: lines}));
+    }
     const move_to_modal=(index)=>{
         switch (index) {
             case -1:
@@ -404,21 +435,74 @@ function MiddleModal(props) {
                 break;
             case 5:
                 if (props.state.destinations.length>=2||props.state.transportation!=""||props.state.mode!="") {
+                    indicaciones=[];
+                    let div_instructions=document.querySelector("#show_instructions_div");
+                    div_instructions.style.display="none";
                     let departure_time_content=`&${props.state.time_type}=${props.state.time}:30`;
                     let avoid_content="&avoid[features]=";
                     props.state.avoid_parameters.forEach(element=>{
                     avoid_content+=`${element},`;
                     })
-                    avoid_content=""
-                    departure_time_content=""
+                    if (props.state.avoid_parameters<=0) {
+                        avoid_content="";
+                    }
+                    let avoid_area="";
+                    if (props.state.avoid_zones.length>0) {
+                        avoid_area="&avoid[areas]=";
+                        props.state.avoid_zones.forEach(avoid_zone => {
+                            avoid_area+=`polygon:`;
+                            avoid_zone.points.forEach(point=>{
+                                avoid_area+=`${point[0]},${point[1]};`;
+                            })
+                        avoid_area+=`|`;
+                    });
+                    }
+                    departure_time_content="";
+                    if (props.state.time_type=="Llegar") {
+                        departure_time_content=`&arrivalTime=${props.state.time}:00`;
+                    }
+                    else if (props.state.time_type=="Salir") {
+                        departure_time_content=`&departureTime=${props.state.time}:00`;
+                    }
                     let vias=``;
                     for (let index = 0; index < props.state.destinations.length; index++) {
-                        console.log(props.state.destinations[index])
                         if(index!=0&&index!=props.state.destinations.length-1){
-                            vias+=`&via=${props.state.destinations[index].string};`;
+                            vias+=`&via=${props.state.destinations[index].string}`;
                         }
                     }
-                    fetch(`https://router.hereapi.com/v8/routes?apikey=IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng&lang=es&origin=${props.state.destinations[0].string}&destination=${props.state.destinations[props.state.destinations.length-1].string}&RoutingType=${props.state.mode}&return=polyline%2Csummary%2Cactions%2Cinstructions%2Ctolls&transportMode=${props.state.transportation}${departure_time_content}${avoid_content}${vias}&alternatives=3`)
+                    modal.lines.forEach(line=>{
+                        map.removeObject(line);
+                    });
+                    setModal(prevState => ({ ...prevState, lines: []}));
+                    let number_of_axles="";
+                    let type_of_truck="";
+                    let type_of_trailer="";
+                    let number_of_trailers="";
+                    if (props.state.transportation=="truck") {
+                        number_of_axles=`&vehicle[axleCount]=${props.state.number_of_axles}`;
+                        type_of_truck=`&vehicle[type]=${props.state.type_of_truck}`;
+                        type_of_trailer=props.state.type_of_trailer;
+                        number_of_trailers=`&vehicle[trailerCount]=${props.state.number_of_trailers}`;
+                    }
+                    let fetch_link=`https://router.hereapi.com/v8/routes
+                    ?apikey=IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng&lang=es
+                    &origin=${props.state.destinations[0].string}${avoid_area}
+                    &destination=${props.state.destinations[props.state.destinations.length-1].string}${vias}
+                    &mode=${props.state.mode};${props.state.transportation};
+                    traffic:${props.state.traffic?"enabled":"disabled"}
+                    &return=polyline%2Csummary%2Cactions%2Cinstructions${props.state.transportation!=pedestrian.here_value?"%2Ctolls":""}
+                    &transportMode=${props.state.transportation}
+                    ${departure_time_content}
+                    ${avoid_content}
+                    ${vias}
+                    ${number_of_axles}
+                    ${number_of_trailers}
+                    ${type_of_truck}
+                    &alternatives=3`;
+                    fetch_link=fetch_link.replace(/ /g, '');
+                    fetch_link=fetch_link.replace(/\n/g, '');
+                    console.log(fetch_link)
+                    fetch(fetch_link)
                         .then(response => {
                             if (response.status==400) {
                             alert("No se puede hacer lo solicitado por los datos")
@@ -429,35 +513,76 @@ function MiddleModal(props) {
                                 console.log(info)
                                 let div=document.querySelector("#show_routes_div");
                                 div.style.display="flex";
+                                var div_routes=document.querySelector("#add_routes");
+                                div_routes.innerHTML="";
                                 document.querySelector("#map").style.width="calc(100% - 500px)";
                                 div.querySelector("#show_routes_from_destinations").innerText=props.state.destinations[0].name;
                                 div.querySelector("#show_routes_to_destinations").innerText=props.state.destinations[props.state.destinations.length-1].name;
                                 div.querySelector("#show_routes_stops").innerText=props.state.destinations.length-2;
-                                div.querySelector("#show_routes_transportation").innerText=props.state.transportation;
+                                div.querySelector("#show_routes_transportation").innerText=transportation[props.state.transportation].name;
                                 openModal(false);
                                 props.setState(prevState => ({ ...prevState, response:info, show_results:true}));
                                 for(let index=0; index<=info["routes"].length-1;index++){
-                                    let data=info["routes"][0]["sections"][0];
-                                    console.log(info["routes"][index]["sections"])
+                                    let minutes=0;
+                                    let distance=0;
+                                    var tolls=[];
+                                    let tolls_total=0;
+                                    let instructions=[];
                                     info["routes"][index]["sections"].forEach(section=>{
-                                        console.log("section")
-                                        console.log(section.polyline)
+                                        minutes+=section["summary"]["duration"];
+                                        distance+=section["summary"]["length"];
                                         var polyline = section.polyline;
                                         let y=decode(polyline);
                                         addPolylineToMap(map, y, colors[index]);
-                                        // section["actions"].forEach(element=>{
-                                        // instructions+=`<li>${element["instruction"]}</li>`
-                                        // })
+                                        section["actions"].forEach(element=>{
+                                            instructions.push(element["instruction"])
+                                        })
+                                        try{
+                                            section["tolls"].forEach(toll=>{
+                                                let y=["",0]
+                                                toll["tollCollectionLocations"].forEach(tollname=>{
+                                                    y[0]+=tollname["name"];
+                                                })
+                                                toll["fares"].forEach(toll_fare=>{
+                                                    y[1]+=parseFloat(toll_fare["price"]["value"]);
+                                                })
+                                                tolls.push(y);
+                                                tolls_total+=y[1];
+                                            })
+                                        }
+                                        catch{tolls.push(["",0])}
                                     })
+                                    tolls_total=tolls_total.toFixed(2);
+                                    minutes=(minutes/60).toFixed(2);
+                                    distance=(distance/1000).toFixed(2);
+                                    indicaciones.push({minutes:minutes, distance:distance, instructions:instructions, tolls:tolls, tolls_total:tolls_total, from:props.state.destinations[0],to:props.state.destinations[props.state.destinations.length-1], vias:props.state.destinations.slice(1,props.state.destinations.length-1)});
+                                    div_routes.innerHTML+=`
+                                    <div style="padding: 10px; margin: 10px; border: 1px black solid;">
+                                        <div>
+                                            <strong style="color: #007BFF; text-decoration: underline;">Opción ${index+1}</strong>
+                                            <i style="float: right; font-size: 30px;" class="${transportation[props.state.transportation].icon}"></i>
+                                        </div>
+                                        <div style="display: flex; width: 340px;">
+                                            <div style="width: 70%;">
+                                                <span id="show_routes_directions">${instructions[parseInt(instructions.length/2)]}</span>
+                                            </div>
+                                            <div style="float: right; display: flex; flex-direction: column; width: 75px; text-align: right;">
+                                                <strong id="show_routes_time" style="color: ${colors[index]};">${minutes} min</strong>
+                                                <strong id="show_routes_distance">${distance} km</strong>
+                                                <strong id="show_routes_money">$${tolls_total}</strong>
+                                            </div>
+                                        </div>
+                                        <p style="color: #007BFF; cursor: pointer; text-decoration: underline; margin: 0px;" onclick="crearIndicaciones(${index})">Indicaciones</p>
+                                    </div>`;
                                 }
-                                return;
                         })
                     })
                 }
+                return;
                 break;
             default:
         }
-        setModal({index:index});
+        setModal(prevState => ({ ...prevState, index: index}));
         if (!props.state.modals_opened.includes(Object.keys(modals)[index])) {
             props.setState(prevState => ({ ...prevState, modals_opened: [...prevState.modals_opened, Object.keys(modals)[index]]}));
         }
@@ -574,20 +699,20 @@ function DestinationsModal(props) {
 }
 
 function TransportationModal(props) {
-    const type_of_truck_trailer="Trailer";
-    const type_of_truck_rigid="Rigido";
-    const two_axles="two_axle";
-    const three_axles="three_axle";
-    const four_axles="four_axle";
-    const five_axles="five_axle";
-    const six_axles="six_axle";
-    const seven_axles="seven_axle";
-    const eight_axles="eight_axle";
-    const nine_axles="nine_axle";
+    const type_of_truck_trailer="tractor";
+    const type_of_truck_rigid="straightTruck";
+    const two_axles="2";
+    const three_axles="3";
+    const four_axles="4";
+    const five_axles="5";
+    const six_axles="6";
+    const seven_axles="7";
+    const eight_axles="8";
+    const nine_axles="9";
     const type_of_trailer_trailer="Remolque";
     const type_of_trailer_caravan="Caravan";
-    const number_of_trailers_simple="Simple";
-    const number_of_trailers_double="Doble";
+    const number_of_trailers_simple="1";
+    const number_of_trailers_double="2";
     const updateTransportation=(vehicle)=>{
         props.setState(prevState => ({ ...prevState, transportation: vehicle}));
     }
@@ -826,7 +951,7 @@ function AvoidModal(props) {
     var parameters={
         evitar:{
             labels:["Carreteras de cuota", "Caminos de Tierra", "Ferry", "Giros complicados", "Túneles", "Giros en U"],
-            parameters:["Carreteras de cuota", "Caminos de Tierra", "Ferry", "Giros complicados", "Túneles", "Giros en U"],
+            parameters:["tollRoad", "dirtRoad", "ferry", "difficultTurns", "tunnel", "uTurns"],
             onClickFunction:onClickEvitar},
         carretera:{
             labels:["ET", "A", "B", "C", "D"],
@@ -870,11 +995,13 @@ function AvoidModal(props) {
         document.querySelector("#avoid_zone_color").value=zones[index].color;
         map.addEventListener('tap',handleAvoidZoneClick, false);
     }
-    
     const eliminateZone=(index)=>{
         var avoid_zones=props.state.avoid_zones;
-        map.removeObject(avoid_zones[index].polygon);
-        map.remoceObjects(avoid_zones[index].icons);
+        try{
+            map.removeObject(avoid_zones[index].polygon);
+            map.removeObjects(avoid_zones[index].icons);
+        }
+        catch (error) {}
         avoid_zones.splice(index, 1);
         props.setState(prevState => ({ ...prevState, avoid_zones: avoid_zones}));
     }
@@ -947,8 +1074,11 @@ function SideModal(props) {
             zone.color=color;
         }
         else{
+            try{
             map.removeObject(zone.polygon);
             map.removeObjects(zone.icons);
+            }
+            catch{}
             zones.splice(props.index, 1);
         }
         props.setState(prevState => ({ ...prevState, avoid_zones: zones, avoid_zone_event_listener:false}));
@@ -1016,7 +1146,7 @@ function SideModal(props) {
     )
 }
 function TimeModal(props) {
-    const values_select_time=[["Salir ahora", "Salir ahora"], ["Llegar a las", "smt"], ["Salir a las", "Salir a las"]];
+    const values_select_time=[["Salir ahora", "Ahora"], ["Llegar a las", "Llegar"], ["Salir a las", "Salir"]];
     const options=()=>{
         var options=[];
         values_select_time.forEach(value=>{
