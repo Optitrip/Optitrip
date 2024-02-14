@@ -2,7 +2,7 @@ import { useState, createContext, useEffect, useContext, useRef } from 'react'
 import './App.css'
 import './style.css'
 import {decode} from './decode.js';
-
+import {indicaciones, crearIndicaciones, returnToRoutes} from './here.js';
 var API_KEY="IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng";
 const OpenModalContext = createContext(null);
 var plus_position=400;
@@ -12,7 +12,7 @@ var colors=["#00BD2A", "#FB8800", "#FF0000", "#d44a8a","#32a852", "#3285a8", "#8
 // train emergency 
 const car = {name: "Auto", icon: "icon-icono-auto", here_value: "car"};
 const tractorTruck = {name: "Camion", icon: "icon-Icono-camion", here_value: "truck"};
-const truck = {name: "Autobús", icon: "icon-icono-autobus", here_value: "truck"};
+const truck = {name: "Autobús", icon: "icon-icono-autobus", here_value: "bus"};
 const train = {name: "Tren", icon: "icon-icono-tren", here_value: "train"};
 const emergency = {name: "Emergencias", icon: "icon-icono-emergencia", here_value: "emergency"};
 const motorcycle = {name: "Motocicleta", icon: "icon-icono-motocicleta", here_value: "scooter"};
