@@ -2,7 +2,7 @@ import { useState, createContext, useEffect, useContext, useRef } from 'react'
 import './App.css'
 import './style.css'
 import {decode} from './decode.js';
-import {indicaciones, crearIndicaciones, returnToRoutes} from './here.js';
+import {indicaciones as indicaciones_here, crearIndicaciones, returnToRoutes} from './here.js';
 
 var API_KEY="IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng";
 const OpenModalContext = createContext(null);
@@ -419,7 +419,7 @@ function MiddleModal(props) {
                 break;
             case 5:
                 if (props.state.destinations.length>=2||props.state.transportation!=""||props.state.mode!="") {
-                    indicaciones=[];
+                    indicaciones_here=[];
                     let div_instructions=document.querySelector("#show_instructions_div");
                     div_instructions.style.display="none";
                     let departure_time_content=`&${props.state.time_type}=${props.state.time}:30`;
@@ -539,7 +539,7 @@ function MiddleModal(props) {
                                     tolls_total=tolls_total.toFixed(2);
                                     minutes=(minutes/60).toFixed(2);
                                     distance=(distance/1000).toFixed(2);
-                                    indicaciones.push({minutes:minutes, distance:distance, instructions:instructions, tolls:tolls, tolls_total:tolls_total, from:props.state.destinations[0],to:props.state.destinations[props.state.destinations.length-1], vias:props.state.destinations.slice(1,props.state.destinations.length-1)});
+                                    indicaciones_here.push({minutes:minutes, distance:distance, instructions:instructions, tolls:tolls, tolls_total:tolls_total, from:props.state.destinations[0],to:props.state.destinations[props.state.destinations.length-1], vias:props.state.destinations.slice(1,props.state.destinations.length-1)});
                                     div_routes.innerHTML+=`
                                     <div style="padding: 10px; margin: 10px; border: 1px black solid;">
                                         <div>
