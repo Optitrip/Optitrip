@@ -2,7 +2,6 @@ import { useState, createContext, useEffect, useContext, useRef } from 'react'
 import './App.css'
 import './style.css'
 import {decode} from './decode.js';
-import './here.js';
 
 var API_KEY="IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng";
 const OpenModalContext = createContext(null);
