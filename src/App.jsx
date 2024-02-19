@@ -419,7 +419,7 @@ function MiddleModal(props) {
                 break;
             case 5:
                 if (props.state.destinations.length>=2||props.state.transportation!=""||props.state.mode!="") {
-                    indicaciones_here=[];
+                    var indicaciones_here=[];
                     let div_instructions=document.querySelector("#show_instructions_div");
                     div_instructions.style.display="none";
                     let departure_time_content=`&${props.state.time_type}=${props.state.time}:30`;
