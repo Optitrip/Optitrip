@@ -38,6 +38,7 @@ const returnToRoutes=()=>{
     let div_routes=document.querySelector("#show_routes_div");
     div_routes.style.display="flex";
 }
+export {indicaciones,crearIndicaciones,returnToRoutes}
 //   var platform = new H.service.Platform({
 //     'apikey': 'IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng'
 //   });
