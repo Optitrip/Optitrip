@@ -3,6 +3,7 @@ import './App.css'
 import './style.css'
 import {decode} from './decode.js';
 import {indicaciones, crearIndicaciones, returnToRoutes} from './here.js';
+
 var API_KEY="IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng";
 const OpenModalContext = createContext(null);
 var plus_position=400;
@@ -1201,7 +1202,6 @@ function LeftComponents(props) {
             <CircleComponent id="mode_parameter" state={props.state} move_to_modal={props.move_to_modal}/>
             <CircleComponent id="avoid_parameter" state={props.state} move_to_modal={props.move_to_modal}/>
             <CircleComponent id="time_parameter" state={props.state} move_to_modal={props.move_to_modal}/>
-            <CircleComponent id="ruta_parameter" state={props.state} move_to_modal={props.move_to_modal}/>
         </div>
     )
 }
