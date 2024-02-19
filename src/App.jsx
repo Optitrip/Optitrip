@@ -240,18 +240,18 @@ export default function App(props) {
     }
     return (
         <div>
-            <div className="container clearfix" style={{zIndex:3, position:"absolute", top:70, left:200+plus_position,margin:"10px", width:"500px"}}>
+            <div className="container clearfix" style={{zIndex:1, position:"absolute", top:70, left:200+plus_position,margin:"10px", width:"500px"}}>
             <SearchComponent state={state} setState={setState} userPosition={state.current_position} addToDestinations={addToDestinations} placeholder="Busca lugares" addPoint={false}/>
             </div>
-            <div className="circle-component" style={{zIndex:3, position:"absolute", top:70, left:90+plus_position, margin:"10px"}}>
+            <div className="circle-component" style={{zIndex:1, position:"absolute", top:70, left:90+plus_position, margin:"10px"}}>
                 <i onClick={()=>state.created?"":createState()} className={`menu-parameters-icons icon-plus ${state.created?"bg-secondary":"bg-primary"}`}>
                 </i>
             </div>
-            <div className="circle-component" style={{zIndex:3, position:"absolute", top:130, left:90+plus_position, margin:"10px"}}>
+            <div className="circle-component" style={{zIndex:1, position:"absolute", top:130, left:90+plus_position, margin:"10px"}}>
                 <span onClick={()=>state.created?openModal(true, "destinations_parameter"):""} className={`menu-parameters-icons icon-pencil ${state.created?"bg-primary":"bg-secondary"}`}>
                 </span>
             </div>
-            <div className="circle-component" style={{zIndex:3, position:"absolute", top:190, left:90+plus_position, margin:"10px"}}>
+            <div className="circle-component" style={{zIndex:1, position:"absolute", top:190, left:90+plus_position, margin:"10px"}}>
                 <i onClick={()=>state.created?deleteState():""} className={`menu-parameters-icons icon-bin ${state.created?"bg-primary":"bg-secondary"}`}>
                 </i>
             </div>
