@@ -11,13 +11,13 @@ var avoid_zone_props=null;
 var colors=["#00BD2A", "#FB8800", "#FF0000", "#d44a8a","#32a852", "#3285a8", "#8f4ad4", "#d44a8a"];
 // train emergency 
 const car = {name: "Auto", icon: "icon-icono-auto", here_value: "car"};
-const tractorTruck = {name: "Camion", icon: "icon-Icono-camion", here_value: "truck"};
-const truck = {name: "Autobús", icon: "icon-icono-autobus", here_value: "bus"};
+const truck = {name: "Camion", icon: "icon-Icono-camion", here_value: "truck"};
+const bus = {name: "Autobús", icon: "icon-icono-autobus", here_value: "bus"};
 const train = {name: "Tren", icon: "icon-icono-tren", here_value: "train"};
 const emergency = {name: "Emergencias", icon: "icon-icono-emergencia", here_value: "emergency"};
 const motorcycle = {name: "Motocicleta", icon: "icon-icono-motocicleta", here_value: "scooter"};
 const pedestrian = {name: "Peaton", icon: "icon-icono-peaton", here_value: "pedestrian"};
-const transportation ={"car":car, "tractorTruck":tractorTruck, "truck":truck, "train":train, "emergency":emergency, "scooter":motorcycle, "pedestrian":pedestrian};
+const transportation ={"car":car, "truck":truck, "bus":bus, "train":train, "emergency":emergency, "scooter":motorcycle, "pedestrian":pedestrian};
 var default_state={
     created:false,
     modals_opened:[],
@@ -375,7 +375,7 @@ function MiddleModal(props) {
         "route_parameter":["TIPO DE VIAJE","¿Cuándo quieres llegar?",<TimeModal setState={props.setState} state={props.state}/>]
     }
     const openModal = useContext(OpenModalContext);
-    function addPolylineToMap(map, poly, color) {
+    function addPolylineToMap(map, poly, color, lines) {
         var lineString = new H.geo.LineString();
         poly["polyline"].forEach(coordinates=>{
           lineString.pushPoint({lat:coordinates[0], lng:coordinates[1]});
@@ -384,9 +384,10 @@ function MiddleModal(props) {
           lineString, { style: { lineWidth: 5, strokeColor:color}}
         )
         map.addObject(polyline);
-        let lines= modal.lines;
         lines.push(polyline);
+        console.log("modal.lines")
         setModal(prevState => ({ ...prevState, lines: lines}));
+        return lines;
     }
     const move_to_modal=(index)=>{
         switch (index) {
@@ -453,10 +454,6 @@ function MiddleModal(props) {
                             vias+=`&via=${props.state.destinations[index].string}`;
                         }
                     }
-                    modal.lines.forEach(line=>{
-                        map.removeObject(line);
-                    });
-                    setModal(prevState => ({ ...prevState, lines: []}));
                     let number_of_axles="";
                     let type_of_truck="";
                     let type_of_trailer="";
@@ -471,8 +468,8 @@ function MiddleModal(props) {
                     ?apikey=IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng&lang=es
                     &origin=${props.state.destinations[0].string}${avoid_area}
                     &destination=${props.state.destinations[props.state.destinations.length-1].string}${vias}
-                    &mode=${props.state.mode};${props.state.transportation};
-                    traffic:${props.state.traffic?"enabled":"disabled"}
+                    &routingMode=${props.state.mode}
+                    &traffic[mode]=${props.state.traffic?"default":"disabled"}
                     &return=polyline%2Csummary%2Cactions%2Cinstructions${props.state.transportation!=pedestrian.here_value?"%2Ctolls":""}
                     &transportMode=${props.state.transportation}
                     ${departure_time_content}
@@ -488,8 +485,8 @@ function MiddleModal(props) {
                     fetch(fetch_link)
                         .then(response => {
                             if (response.status==400) {
-                            alert("No se puede hacer lo solicitado por los datos")
-                            return
+                                alert("No se puede hacer lo solicitado por los datos")
+                                return
                             }
                             response.json()
                             .then(info => {
@@ -504,6 +501,8 @@ function MiddleModal(props) {
                                 div.querySelector("#show_routes_stops").innerText=props.state.destinations.length-2;
                                 div.querySelector("#show_routes_transportation").innerText=transportation[props.state.transportation].name;
                                 openModal(false);
+                                var lines=[];
+                                map.removeObjects(modal.lines);
                                 props.setState(prevState => ({ ...prevState, response:info, show_results:true}));
                                 for(let index=0; index<=info["routes"].length-1;index++){
                                     let minutes=0;
@@ -516,7 +515,7 @@ function MiddleModal(props) {
                                         distance+=section["summary"]["length"];
                                         var polyline = section.polyline;
                                         let y=decode(polyline);
-                                        addPolylineToMap(map, y, colors[index]);
+                                        lines=addPolylineToMap(map, y, colors[index], lines);
                                         section["actions"].forEach(element=>{
                                             instructions.push(element["instruction"])
                                         })
@@ -722,13 +721,13 @@ function TransportationModal(props) {
             <i className={`${motorcycle.icon} display-4`}></i>
             <p>{motorcycle.name}</p>
         </div>
-        <div onClick={()=>updateTransportation(tractorTruck.here_value)} className={`btn transport-vehicles ${props.state.transportation==tractorTruck.here_value?"btn-primary":""}`}>
-            <i className={`${tractorTruck.icon} display-4`}></i>
-            <p>{tractorTruck.name}</p>
-        </div>
         <div onClick={()=>updateTransportation(truck.here_value)} className={`btn transport-vehicles ${props.state.transportation==truck.here_value?"btn-primary":""}`}>
             <i className={`${truck.icon} display-4`}></i>
             <p>{truck.name}</p>
+        </div>
+        <div onClick={()=>updateTransportation(bus.here_value)} className={`btn transport-vehicles ${props.state.transportation==bus.here_value?"btn-primary":""}`}>
+            <i className={`${bus.icon} display-4`}></i>
+            <p>{bus.name}</p>
         </div>
         <div onClick={()=>updateTransportation(train.here_value)} className={`btn transport-vehicles ${props.state.transportation==train.here_value?"btn-primary":""}`}>
             <i className={`${train.icon} display-4`}></i>
@@ -743,17 +742,17 @@ function TransportationModal(props) {
             <p>{pedestrian.name}</p>
         </div>
         </div>
-        <div style={{pointerEvents: `${props.state.transportation==tractorTruck.here_value?"":"none"}`, opacity:`${props.state.transportation==tractorTruck.here_value?1:.5}`}}>
+        <div style={{pointerEvents: `${props.state.transportation==truck.here_value?"":"none"}`, opacity:`${props.state.transportation==truck.here_value?1:.5}`}}>
         <div className='border border-dark shadow mt-3 rounded p-1 d-flex align-items-center text-center'>
             <div style={{float:"left", width:"50%"}}>
             <h5>Tipo de camión:</h5>
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
-                <div onClick={()=>updateTypeOfTruck(type_of_truck_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.type_of_truck==type_of_truck_trailer?"text-primary":""}`}>
+                <div onClick={()=>updateTypeOfTruck(type_of_truck_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.type_of_truck==type_of_truck_trailer?"text-primary":""}`}>
                     <i className='icon-Trailer' style={{fontSize:30}}></i>
                     Trailer
                     </div>
-                <div onClick={()=>updateTypeOfTruck(type_of_truck_rigid)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.type_of_truck==type_of_truck_rigid?"text-primary":""}`}>
+                <div onClick={()=>updateTypeOfTruck(type_of_truck_rigid)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.type_of_truck==type_of_truck_rigid?"text-primary":""}`}>
                     <i className='icon-rigido'></i>
                     Rígido
                     </div>
@@ -765,32 +764,32 @@ function TransportationModal(props) {
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
                 <div style={{width:"50%"}}>
-                     <div onClick={()=>updateNumberOfAxles(two_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==two_axles?"text-primary":""}`}>
+                     <div onClick={()=>updateNumberOfAxles(two_axles)} className={`col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.number_of_axles==two_axles?"text-primary":""}`}>
                     <i className="icon-eje1"></i>
                     (2)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(three_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==three_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(three_axles)} className={`col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.number_of_axles==three_axles?"text-primary":""}`}>
                     <i className="icon-eje2"></i>
                     (3)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(four_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==four_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(four_axles)} className={`col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.number_of_axles==four_axles?"text-primary":""}`}>
                 <i className="icon-eje3"></i>                    (4)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(five_axles)} className={`col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==five_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(five_axles)} className={`col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.number_of_axles==five_axles?"text-primary":""}`}>
                 <i className="icon-eje4"></i>                    (5)
                 </div>
                 </div>
                <div style={{width:"50%"}}>
-                <div onClick={()=>updateNumberOfAxles(six_axles)} className={`col btn m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==six_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(six_axles)} className={`col btn m-1 d-flex justify-content-center align-items-center ${props.state.transportation==truck.here_value&&props.state.number_of_axles==six_axles?"text-primary":""}`}>
                 <i className="icon-eje5 mr-1" style={{fontSize:21}}></i>                    (6)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(seven_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==seven_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(seven_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==truck.here_value&&props.state.number_of_axles==seven_axles?"text-primary":""}`}>
                 <i className="icon-eje6 mr-1" style={{fontSize:30}}></i>                    (7)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(eight_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==eight_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(eight_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==truck.here_value&&props.state.number_of_axles==eight_axles?"text-primary":""}`}>
                 <i className="icon-eje7 mr-1" style={{fontSize:30}}></i>                    (8)
                 </div>
-                <div onClick={()=>updateNumberOfAxles(nine_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_axles==nine_axles?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfAxles(nine_axles)} className={`col btn  m-1 d-flex justify-content-center align-items-center ${props.state.transportation==truck.here_value&&props.state.number_of_axles==nine_axles?"text-primary":""}`}>
                 <i className="icon-eje8 mr-1" style={{fontSize:30}}></i>                    (9)
                 </div>
                </div>
@@ -801,11 +800,11 @@ function TransportationModal(props) {
             <h5>Tipo de remolque:</h5>
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
-                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.type_of_trailer==type_of_trailer_trailer?"text-primary":""}`}>
+                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.type_of_trailer==type_of_trailer_trailer?"text-primary":""}`}>
                     <i className="icon-Remolque"></i>
                     Remolque
                     </div>
-                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_caravan)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.type_of_trailer==type_of_trailer_caravan?"text-primary":""}`}>
+                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_caravan)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.type_of_trailer==type_of_trailer_caravan?"text-primary":""}`}>
                     <i className="icon-caravan" style={{fontSize:30}}></i>
                     Caravan
                     </div>
@@ -816,11 +815,11 @@ function TransportationModal(props) {
             <h5>Número de remolques:</h5>
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
-                <div onClick={()=>updateNumberOfTrailers(number_of_trailers_simple)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_trailers==number_of_trailers_simple?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfTrailers(number_of_trailers_simple)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.number_of_trailers==number_of_trailers_simple?"text-primary":""}`}>
                     <i className="icon-simple"></i>
                     Simple
                     </div>
-                <div onClick={()=>updateNumberOfTrailers(number_of_trailers_double)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==tractorTruck.here_value&&props.state.number_of_trailers==number_of_trailers_double?"text-primary":""}`}>
+                <div onClick={()=>updateNumberOfTrailers(number_of_trailers_double)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.number_of_trailers==number_of_trailers_double?"text-primary":""}`}>
                     <i className="icon-doble-remolque"></i>
                     Doble
                     </div>
@@ -832,8 +831,8 @@ function TransportationModal(props) {
 }
 
 function ModeModal(props) {
-    var fast="fastest";
-    var short="shortest";
+    var fast="fast";
+    var short="short";
     var balanced="balanced";
     var economic="economic";
     var landscaper="scenic";
