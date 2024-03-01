@@ -3,7 +3,9 @@ import './App.css'
 import './style.css'
 import {decode} from './decode.js';
 
+// API KEY
 var API_KEY="IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng";
+// 
 const OpenModalContext = createContext(null);
 var plus_position=400;
 var avoid_zone_index=0;
@@ -315,7 +317,6 @@ function SearchComponent(props) {
         })
     }
     function searchApi(){
-        
         var fetch_link="";
         fetch_link=`https://discover.search.hereapi.com/v1/discover?at=${props.userPosition.lat},${props.userPosition.lng}&lang=es&q=${search.query}&apiKey=${API_KEY}`;
         fetch(fetch_link)
@@ -468,7 +469,7 @@ function MiddleModal(props) {
                     ?apikey=IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng&lang=es
                     &origin=${props.state.destinations[0].string}${avoid_area}
                     &destination=${props.state.destinations[props.state.destinations.length-1].string}${vias}
-                    &routingMode=${props.state.mode}
+                    &mode=fast
                     &traffic[mode]=${props.state.traffic?"default":"disabled"}
                     &return=polyline%2Csummary%2Cactions%2Cinstructions${props.state.transportation!=pedestrian.here_value?"%2Ctolls":""}
                     &transportMode=${props.state.transportation}
@@ -729,11 +730,11 @@ function TransportationModal(props) {
             <i className={`${bus.icon} display-4`}></i>
             <p>{bus.name}</p>
         </div>
-        <div onClick={()=>updateTransportation(train.here_value)} className={`btn transport-vehicles ${props.state.transportation==train.here_value?"btn-primary":""}`}>
+        <div onClick={()=>updateTransportation(train.here_value)} disabled className={`btn transport-vehicles ${props.state.transportation==train.here_value?"btn-primary":""}`}>
             <i className={`${train.icon} display-4`}></i>
             <p>{train.name}</p>
         </div>
-        <div onClick={()=>updateTransportation(emergency.here_value)} className={`btn transport-vehicles ${props.state.transportation==emergency.here_value?"btn-primary":""}`}>
+        <div onClick={()=>updateTransportation(emergency.here_value)} disabled className={`btn transport-vehicles ${props.state.transportation==emergency.here_value?"btn-primary":""}`}>
             <i className={`${emergency.icon} display-4`}></i>
             <p>{emergency.name}</p>
         </div>
@@ -881,7 +882,6 @@ const handleAvoidZoneClick = (ev) => {
             catch{}
             
         }
-        console.log(zone.name)
         var icono=new H.map.Marker({lat:pos.lat, lng:pos.lng, }, {
             volatility: true,
             icon:new H.map.Icon(`<svg xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" version="1.1" x="0px" y="0px" width="100" height="100" viewBox="0 0 100 100" style="enable-background:new 0 0 100 100;" xml:space="preserve">
@@ -1128,34 +1128,37 @@ function SideModal(props) {
     )
 }
 function TimeModal(props) {
+    const [time, setTime]=useState({
+        time: "",
+        time_type: "",
+    });
     const values_select_time=[["Salir ahora", "Ahora"], ["Llegar a las", "Llegar"], ["Salir a las", "Salir"]];
     const options=()=>{
         var options=[];
         values_select_time.forEach(value=>{
             options.push(
-                <option value={value[1]}>{value[0]}</option>
+                <option key={`option-${value[1]}`} value={value[1]}>{value[0]}</option>
             )
-        })
-
+        });
         return options;
     }
     const updateTime=()=>{
         var time=document.getElementById("select-time").value;
         var date=document.getElementById("select-type").value;
+        setTime({time: time, time_type: date});
         props.setState(prevState => ({ ...prevState, time: time, time_type: date }));
     } 
     return(
         <div>
-                <span className="icon"><i className="fas fa-tachometer-alt"></i></span>
-                <h4>Tiempo:</h4>
-                <select id="select-type" style={{width:"200px"}} className='form-control mb-5' onChange={updateTime}>
-                    {options()}
-                </select>
-                <div style={{display:`${props.state.time_type=="Salir ahora"?"none":"block"}`}}>
-                <input id="select-time" onInput={updateTime} className="form-control" type="datetime-local" required />
-
-                </div>
+            <span className="icon"><i className="fas fa-tachometer-alt"></i></span>
+            <h4>Tiempo:</h4>
+            <select id="select-type" style={{width:"200px"}} value={time.time} className='form-control mb-5' onChange={updateTime}>
+                {options()}
+            </select>
+            <div style={{display:`${props.state.time_type=="Salir ahora"?"none":"block"}`}}>
+            <input id="select-time" onInput={updateTime} className="form-control" type="datetime-local" required />
             </div>
+        </div>
     )
 }
 
@@ -1186,4 +1189,3 @@ function LeftComponents(props) {
         </div>
     )
 }
-
