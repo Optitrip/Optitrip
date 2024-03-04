@@ -82,9 +82,15 @@
   margin-left: 30px;
   color:white;
   border:0px;
+  height: 70px;
 }
-.upper-buttons-div>.btn>img{
-  height:30px
+.upper-buttons-div>.btn{
+  margin:0px;
+  height:70px;
+  font-size: 19px;
+}
+.upper-buttons-div>.btn>i{
+  font-size: 35px;
 }
 .boton-icono-evitar{
   margin:15px;

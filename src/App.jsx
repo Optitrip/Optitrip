@@ -42,14 +42,11 @@ var default_state={
     avoid_zones:[],
     edit_avoid_zone:0,
     avoid_zone_event_listener:false,
-    response:"",
-    incorrect:false,
-    score:0,
     modal_opened:false,
     modal_parameter_opened:"destinations_parameter",
     ephemiral_marker:[],
     show_results:false,
-    response:"",
+    lines:[],
 };
 var platform = new H.service.Platform({
     'apikey': 'IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng'
@@ -92,7 +89,7 @@ export default function App(props) {
         setState(prevState => ({ ...prevState, modal_opened: modal_opened, modal_parameter_opened:modal_parameter_opened}));
     }
     const deleteState=()=>{
-        setState(default_state);
+        location.reload();
     }
     const createState=()=>{
         setState({...state, created:true}); 
@@ -267,7 +264,6 @@ export default function App(props) {
 
 function SearchComponent(props) {
     const [search, setSearch]=useState({
-        values:[],
         query:"",
         selected_lat_lng:null,
         reply_places:[],
@@ -364,7 +360,6 @@ function SearchComponent(props) {
 
 function MiddleModal(props) {
     const [modal, setModal]=useState({
-        lines:[],
         index:0
     })
     const modals={
@@ -386,9 +381,166 @@ function MiddleModal(props) {
         )
         map.addObject(polyline);
         lines.push(polyline);
-        console.log("modal.lines")
-        setModal(prevState => ({ ...prevState, lines: lines}));
+        props.setState(prevState => ({ ...prevState, lines: lines}));
         return lines;
+    }
+    const here_api_routes=(index) => {
+        if (props.state.destinations.length>=2||props.state.transportation!=""||props.state.mode!="") {
+            indicaciones=[];
+            let div_instructions=document.querySelector("#show_instructions_div");
+            div_instructions.style.display="none";
+            let departure_time_content=`&${props.state.time_type}=${props.state.time}:30`;
+            let avoid_content="&avoid[features]=";
+            props.state.avoid_parameters.forEach(element=>{
+            avoid_content+=`${element},`;
+            })
+            if (props.state.avoid_parameters<=0) {
+                avoid_content="";
+            }
+            let avoid_area="";
+            if (props.state.avoid_zones.length>0) {
+                avoid_area="&avoid[areas]=";
+                props.state.avoid_zones.forEach(avoid_zone => {
+                    avoid_area+=`polygon:`;
+                    avoid_zone.points.forEach(point=>{
+                        avoid_area+=`${point[0]},${point[1]};`;
+                    })
+                avoid_area+=`|`;
+            });
+            }
+            departure_time_content="";
+            if (props.state.time_type=="Llegar a las:") {
+                departure_time_content=`&arrivalTime=${props.state.time}:00`;
+            }
+            else if (props.state.time_type=="Salir a las: ") {
+                departure_time_content=`&departureTime=${props.state.time}:00`;
+            }
+            let vias=``;
+            for (let index = 0; index < props.state.destinations.length; index++) {
+                if(index!=0&&index!=props.state.destinations.length-1){
+                    vias+=`&via=${props.state.destinations[index].string}`;
+                }
+            }
+            let number_of_axles="";
+            let type_of_truck="";
+            let type_of_trailer="";
+            let number_of_trailers="";
+            if (props.state.transportation=="truck") {
+                number_of_axles=`&vehicle[axleCount]=${props.state.number_of_axles}`;
+                type_of_truck=`&vehicle[type]=${props.state.type_of_truck}`;
+                type_of_trailer=props.state.type_of_trailer;
+                number_of_trailers=`&vehicle[trailerCount]=${props.state.number_of_trailers}`;
+            }
+            let fetch_link=`https://router.hereapi.com/v8/routes
+            ?apikey=IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng&lang=es
+            &origin=${props.state.destinations[0].string}${avoid_area}
+            &destination=${props.state.destinations[props.state.destinations.length-1].string}${vias}
+            &mode=fast
+            &traffic[mode]=${props.state.traffic?"default":"disabled"}
+            &return=polyline%2Csummary%2Cactions%2Cinstructions${props.state.transportation!=pedestrian.here_value?"%2Ctolls":""}
+            &transportMode=${props.state.transportation}
+            ${departure_time_content}
+            ${avoid_content}
+            ${vias}
+            ${number_of_axles}
+            ${number_of_trailers}
+            ${type_of_truck}
+            &alternatives=3`;
+            fetch_link=fetch_link.replace(/ /g, '');
+            fetch_link=fetch_link.replace(/\n/g, '');
+            console.log(fetch_link)
+            fetch(fetch_link)
+                .then(response => {
+                    if (response.status==400) {
+                        alert("No se puede hacer lo solicitado por los datos")
+                        return
+                    }
+                    response.json()
+                    .then(info => {
+                        console.log(info)
+                        let div=document.querySelector("#show_routes_div");
+                        div.style.display="flex";
+                        var div_routes=document.querySelector("#add_routes");
+                        div_routes.innerHTML="";
+                        document.querySelector("#map").style.width="calc(100% - 500px)";
+                        div.querySelector("#show_routes_from_destinations").innerText=props.state.destinations[0].name;
+                        div.querySelector("#show_routes_to_destinations").innerText=props.state.destinations[props.state.destinations.length-1].name;
+                        div.querySelector("#show_routes_stops").innerText=props.state.destinations.length-2;
+                        div.querySelector("#show_routes_transportation").innerText=transportation[props.state.transportation].name;
+                        openModal(false);
+                        var lines=[];
+                        map.removeObjects(props.state.lines);
+                        props.setState(prevState => ({ ...prevState, response:info, show_results:true}));
+                        for(let index=0; index<=info["routes"].length-1;index++){
+                            let minutes=0;
+                            let distance=0;
+                            var tolls=[];
+                            let tolls_total=0;
+                            let instructions=[];
+                            let departure_time=info["routes"][index]["sections"][0]["departure"]["time"];
+                            let arrival_time=info["routes"][index]["sections"][info["routes"][index]["sections"].length-1]["arrival"]["time"];
+                            departure_time=new Date(departure_time);
+                            arrival_time=new Date(arrival_time);
+                            departure_time=`Salida: ${departure_time.getDate()}/${departure_time.getMonth()}/${departure_time.getFullYear()} ${departure_time.getHours()}:${departure_time.getMinutes()}`;
+                            arrival_time=`Llegada: ${arrival_time.getDate()}/${arrival_time.getMonth()}/${arrival_time.getFullYear()} ${arrival_time.getHours()}:${arrival_time.getMinutes()}`;
+                            info["routes"][index]["sections"].forEach(section=>{
+                                minutes+=section["summary"]["duration"];
+                                distance+=section["summary"]["length"];
+                                var polyline = section.polyline;
+                                let y=decode(polyline);
+                                lines=addPolylineToMap(map, y, colors[index], lines);
+                                section["actions"].forEach(element=>{
+                                    instructions.push(element["instruction"])
+                                })
+                                try{
+                                    section["tolls"].forEach(toll=>{
+                                        let y=["",0]
+                                        toll["tollCollectionLocations"].forEach(tollname=>{
+                                            y[0]+=tollname["name"];
+                                        })
+                                        toll["fares"].forEach(toll_fare=>{
+                                            y[1]+=parseFloat(toll_fare["price"]["value"]);
+                                        })
+                                        tolls.push(y);
+                                        tolls_total+=y[1];
+                                    })
+                                }
+                                catch{tolls.push(["",0])}
+                            })
+                            tolls_total=tolls_total.toFixed(2);
+                            minutes=(minutes/60).toFixed(2);
+                            distance=(distance/1000).toFixed(2);
+                            indicaciones.push({minutes:minutes, distance:distance, instructions:instructions, tolls:tolls, tolls_total:tolls_total, from:props.state.destinations[0],to:props.state.destinations[props.state.destinations.length-1], vias:props.state.destinations.slice(1,props.state.destinations.length-1)});
+                            div_routes.innerHTML+=`
+                            <div style="padding: 10px; margin: 10px; border: 1px black solid;">
+                                <div>
+                                    <strong style="color: #007BFF; text-decoration: underline;">Opción ${index+1}</strong>
+                                    <i style="float: right; font-size: 30px;" class="${transportation[props.state.transportation].icon}"></i>
+                                </div>
+                                <div style="display: flex; width: 340px;">
+                                    <div style="width: 70%;">
+                                        <strong id="show_routes_departure">
+                                        ${departure_time}
+                                        </strong><br>
+                                        <strong id="show_routes_arrive">
+                                        ${arrival_time} 
+                                        </strong><br>
+                                        <span id="show_routes_directions">
+                                        ${instructions[parseInt(instructions.length/2)]}
+                                        </span>
+                                    </div>
+                                    <div style="float: right; display: flex; flex-direction: column; width: 75px; text-align: right;">
+                                        <strong id="show_routes_time" style="color: ${colors[index]};">${minutes} min</strong>
+                                        <strong id="show_routes_distance">${distance} km</strong>
+                                        <strong id="show_routes_money">$${tolls_total}</strong>
+                                    </div>
+                                </div>
+                                <p style="color: #007BFF; cursor: pointer; text-decoration: underline; margin: 0px;" onclick="crearIndicaciones(${index})">Indicaciones</p>
+                            </div>`;
+                        }
+                })
+            })
+        }
     }
     const move_to_modal=(index)=>{
         switch (index) {
@@ -419,148 +571,7 @@ function MiddleModal(props) {
                 }
                 break;
             case 5:
-                if (props.state.destinations.length>=2||props.state.transportation!=""||props.state.mode!="") {
-                    indicaciones=[];
-                    let div_instructions=document.querySelector("#show_instructions_div");
-                    div_instructions.style.display="none";
-                    let departure_time_content=`&${props.state.time_type}=${props.state.time}:30`;
-                    let avoid_content="&avoid[features]=";
-                    props.state.avoid_parameters.forEach(element=>{
-                    avoid_content+=`${element},`;
-                    })
-                    if (props.state.avoid_parameters<=0) {
-                        avoid_content="";
-                    }
-                    let avoid_area="";
-                    if (props.state.avoid_zones.length>0) {
-                        avoid_area="&avoid[areas]=";
-                        props.state.avoid_zones.forEach(avoid_zone => {
-                            avoid_area+=`polygon:`;
-                            avoid_zone.points.forEach(point=>{
-                                avoid_area+=`${point[0]},${point[1]};`;
-                            })
-                        avoid_area+=`|`;
-                    });
-                    }
-                    departure_time_content="";
-                    if (props.state.time_type=="Llegar") {
-                        departure_time_content=`&arrivalTime=${props.state.time}:00`;
-                    }
-                    else if (props.state.time_type=="Salir") {
-                        departure_time_content=`&departureTime=${props.state.time}:00`;
-                    }
-                    let vias=``;
-                    for (let index = 0; index < props.state.destinations.length; index++) {
-                        if(index!=0&&index!=props.state.destinations.length-1){
-                            vias+=`&via=${props.state.destinations[index].string}`;
-                        }
-                    }
-                    let number_of_axles="";
-                    let type_of_truck="";
-                    let type_of_trailer="";
-                    let number_of_trailers="";
-                    if (props.state.transportation=="truck") {
-                        number_of_axles=`&vehicle[axleCount]=${props.state.number_of_axles}`;
-                        type_of_truck=`&vehicle[type]=${props.state.type_of_truck}`;
-                        type_of_trailer=props.state.type_of_trailer;
-                        number_of_trailers=`&vehicle[trailerCount]=${props.state.number_of_trailers}`;
-                    }
-                    let fetch_link=`https://router.hereapi.com/v8/routes
-                    ?apikey=IA6wsOsWVEGNVl1rjQ8REXSMmQCkW5sfBpkGL4I1kng&lang=es
-                    &origin=${props.state.destinations[0].string}${avoid_area}
-                    &destination=${props.state.destinations[props.state.destinations.length-1].string}${vias}
-                    &mode=fast
-                    &traffic[mode]=${props.state.traffic?"default":"disabled"}
-                    &return=polyline%2Csummary%2Cactions%2Cinstructions${props.state.transportation!=pedestrian.here_value?"%2Ctolls":""}
-                    &transportMode=${props.state.transportation}
-                    ${departure_time_content}
-                    ${avoid_content}
-                    ${vias}
-                    ${number_of_axles}
-                    ${number_of_trailers}
-                    ${type_of_truck}
-                    &alternatives=3`;
-                    fetch_link=fetch_link.replace(/ /g, '');
-                    fetch_link=fetch_link.replace(/\n/g, '');
-                    console.log(fetch_link)
-                    fetch(fetch_link)
-                        .then(response => {
-                            if (response.status==400) {
-                                alert("No se puede hacer lo solicitado por los datos")
-                                return
-                            }
-                            response.json()
-                            .then(info => {
-                                console.log(info)
-                                let div=document.querySelector("#show_routes_div");
-                                div.style.display="flex";
-                                var div_routes=document.querySelector("#add_routes");
-                                div_routes.innerHTML="";
-                                document.querySelector("#map").style.width="calc(100% - 500px)";
-                                div.querySelector("#show_routes_from_destinations").innerText=props.state.destinations[0].name;
-                                div.querySelector("#show_routes_to_destinations").innerText=props.state.destinations[props.state.destinations.length-1].name;
-                                div.querySelector("#show_routes_stops").innerText=props.state.destinations.length-2;
-                                div.querySelector("#show_routes_transportation").innerText=transportation[props.state.transportation].name;
-                                openModal(false);
-                                var lines=[];
-                                map.removeObjects(modal.lines);
-                                props.setState(prevState => ({ ...prevState, response:info, show_results:true}));
-                                for(let index=0; index<=info["routes"].length-1;index++){
-                                    let minutes=0;
-                                    let distance=0;
-                                    var tolls=[];
-                                    let tolls_total=0;
-                                    let instructions=[];
-                                    info["routes"][index]["sections"].forEach(section=>{
-                                        minutes+=section["summary"]["duration"];
-                                        distance+=section["summary"]["length"];
-                                        var polyline = section.polyline;
-                                        let y=decode(polyline);
-                                        lines=addPolylineToMap(map, y, colors[index], lines);
-                                        section["actions"].forEach(element=>{
-                                            instructions.push(element["instruction"])
-                                        })
-                                        try{
-                                            section["tolls"].forEach(toll=>{
-                                                let y=["",0]
-                                                toll["tollCollectionLocations"].forEach(tollname=>{
-                                                    y[0]+=tollname["name"];
-                                                })
-                                                toll["fares"].forEach(toll_fare=>{
-                                                    y[1]+=parseFloat(toll_fare["price"]["value"]);
-                                                })
-                                                tolls.push(y);
-                                                tolls_total+=y[1];
-                                            })
-                                        }
-                                        catch{tolls.push(["",0])}
-                                    })
-                                    tolls_total=tolls_total.toFixed(2);
-                                    minutes=(minutes/60).toFixed(2);
-                                    distance=(distance/1000).toFixed(2);
-                                    indicaciones.push({minutes:minutes, distance:distance, instructions:instructions, tolls:tolls, tolls_total:tolls_total, from:props.state.destinations[0],to:props.state.destinations[props.state.destinations.length-1], vias:props.state.destinations.slice(1,props.state.destinations.length-1)});
-                                    div_routes.innerHTML+=`
-                                    <div style="padding: 10px; margin: 10px; border: 1px black solid;">
-                                        <div>
-                                            <strong style="color: #007BFF; text-decoration: underline;">Opción ${index+1}</strong>
-                                            <i style="float: right; font-size: 30px;" class="${transportation[props.state.transportation].icon}"></i>
-                                        </div>
-                                        <div style="display: flex; width: 340px;">
-                                            <div style="width: 70%;">
-                                                <span id="show_routes_directions">${instructions[parseInt(instructions.length/2)]}</span>
-                                            </div>
-                                            <div style="float: right; display: flex; flex-direction: column; width: 75px; text-align: right;">
-                                                <strong id="show_routes_time" style="color: ${colors[index]};">${minutes} min</strong>
-                                                <strong id="show_routes_distance">${distance} km</strong>
-                                                <strong id="show_routes_money">$${tolls_total}</strong>
-                                            </div>
-                                        </div>
-                                        <p style="color: #007BFF; cursor: pointer; text-decoration: underline; margin: 0px;" onclick="crearIndicaciones(${index})">Indicaciones</p>
-                                    </div>`;
-                                }
-                        })
-                    })
-                }
+                here_api_routes(index);
                 return;
                 break;
             default:
@@ -730,11 +741,11 @@ function TransportationModal(props) {
             <i className={`${bus.icon} display-4`}></i>
             <p>{bus.name}</p>
         </div>
-        <div onClick={()=>updateTransportation(train.here_value)} disabled className={`btn transport-vehicles ${props.state.transportation==train.here_value?"btn-primary":""}`}>
+        <div onClick={()=>updateTransportation(train.here_value)} style={{pointerEvents: "none", opacity: 0.5}} disabled={true} className={`btn transport-vehicles ${props.state.transportation==train.here_value?"btn-primary":""}`}>
             <i className={`${train.icon} display-4`}></i>
             <p>{train.name}</p>
         </div>
-        <div onClick={()=>updateTransportation(emergency.here_value)} disabled className={`btn transport-vehicles ${props.state.transportation==emergency.here_value?"btn-primary":""}`}>
+        <div onClick={()=>updateTransportation(emergency.here_value)} style={{pointerEvents: "none", opacity: 0.5}} disabled={true} className={`btn transport-vehicles ${props.state.transportation==emergency.here_value?"btn-primary":""}`}>
             <i className={`${emergency.icon} display-4`}></i>
             <p>{emergency.name}</p>
         </div>
@@ -797,16 +808,16 @@ function TransportationModal(props) {
             </div>
         </div>
         <div className='border border-dark shadow mt-3 rounded p-1 d-flex align-items-center text-center'>
-            <div style={{float:"left", width:"50%"}}>
+            <div style={{float:"left", width:"50%", pointerEvents: "none", opacity: 0.5}}>
             <h5>Tipo de remolque:</h5>
             </div>
             <div className="row" style={{float:"left", width:"50%"}}>
-                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_trailer)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.type_of_trailer==type_of_trailer_trailer?"text-primary":""}`}>
-                    <i className="icon-Remolque"></i>
+                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_trailer)} className={`vehicles-buttons col btn  m-1`} style={{pointerEvents: "none", opacity: 0.5}} >
+                    <i className="icon-Remolque"style={{pointerEvents: "none", opacity: 0.5}} ></i>
                     Remolque
                     </div>
-                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_caravan)} className={`vehicles-buttons col btn  m-1 ${props.state.transportation==truck.here_value&&props.state.type_of_trailer==type_of_trailer_caravan?"text-primary":""}`}>
-                    <i className="icon-caravan" style={{fontSize:30}}></i>
+                <div onClick={()=>updateTypeOfTrailer(type_of_trailer_caravan)} className={`vehicles-buttons col btn  m-1`} style={{pointerEvents: "none", opacity: 0.5}} >
+                    <i className="icon-caravan" style={{pointerEvents: "none", opacity: 0.5}} ></i>
                     Caravan
                     </div>
             </div>
@@ -848,17 +859,16 @@ function ModeModal(props) {
         <div style={{display:"flex", justifyContent:"center", alignItems:"center", flexWrap:"wrap"}}>
             <button onClick={()=>updateMode(fast)} className={`btn btn-primary boton-icono-evitar ${props.state.mode==fast?"active":""}`}><i className='icon-icono-rapido' style={{fontSize:175, marginLeft:-28}}></i><h5 style={{marginTop:-20}}>Rápido</h5></button>
             <button onClick={()=>updateMode(short)} className={`btn btn-primary boton-icono-evitar ${props.state.mode==short?"active":""}`}><i className='icon-icono-corto display-1'></i><h5>Corto</h5></button>
-            <button onClick={()=>updateMode(balanced)} className={`btn btn-primary boton-icono-evitar ${props.state.mode==balanced?"active":""}`}><i className='icon-icono-balanceado display-1'></i><h5>Balanceado</h5></button>
-            <button onClick={()=>updateMode(economic)} className={`btn btn-primary boton-icono-evitar ${props.state.mode==economic?"active":""}`}><i className='icon-icono-economico display-1'></i><h5>Económico</h5></button>
-            <button onClick={()=>updateMode(landscaper)} className={`btn btn-primary boton-icono-evitar ${props.state.mode==landscaper?"active":""}`}><i className='icon-icono-paisajista display-1'></i><h5>Paisajista</h5></button>
+            <button style={{pointerEvents: "none", opacity: 0.5}}  onClick={()=>updateMode(balanced)} className={`btn btn-primary boton-icono-evitar ${props.state.mode==balanced?"active":""}`}><i className='icon-icono-balanceado display-1'></i><h5>Balanceado</h5></button>
+            <button style={{pointerEvents: "none", opacity: 0.5}}  onClick={()=>updateMode(economic)} className={`btn btn-primary boton-icono-evitar ${props.state.mode==economic?"active":""}`}><i className='icon-icono-economico display-1'></i><h5>Económico</h5></button>
+            <button style={{pointerEvents: "none", opacity: 0.5}} onClick={()=>updateMode(landscaper)} className={`btn btn-primary boton-icono-evitar ${props.state.mode==landscaper?"active":""}`}><i className='icon-icono-paisajista display-1'></i><h5>Paisajista</h5></button>
         </div>
         <div style={{display:"flex", justifyContent:"flex-end", alignItems:"center"}}>
             <span>Optimizar ruta para el tráfico:</span> 
-            <button onClick={()=>updateTraffic(false)} className={`${props.state.traffic?"btn btn-secondary":"btn btn-danger"}`}>No</button>
-            <button onClick={()=>updateTraffic(true)} className={`${props.state.traffic?"btn btn-success":"btn btn-secondary"}`}>Si</button>
+            <button onClick={()=>updateTraffic(false)} style={{borderRadius: "10px 0px 0px 10px"}} className={`${props.state.traffic?"btn btn-secondary":"btn btn-danger"}`}>No</button>
+            <button onClick={()=>updateTraffic(true)} style={{borderRadius: "0px 10px 10px 0px"}} className={`${props.state.traffic?"btn btn-success":"btn btn-secondary"}`}>Si</button>
         </div>
         </div>
-        
     )
 }
 const handleAvoidZoneClick = (ev) => {
@@ -1029,15 +1039,10 @@ function AvoidModal(props) {
 function SideModal(props) {
     const [color, setColor]=useState("#ffffff");
     const openModal = useContext(OpenModalContext);
-    var past_zone={}
-    useEffect(() => {
-        past_zone=props.state.avoid_zones[props.state.edit_avoid_zone];
-    }, [])
     var zone={"name":"", "color":"", "points":""};
     if(props.state.avoid_zones.length>props.index){
         zone=props.state.avoid_zones[props.index];
     }
-    var name=zone.name;
     const saveZone=(zone,save)=>{
         var zones=props.state.avoid_zones;
         var name=document.querySelector("#avoid_zone_name").value;
@@ -1108,7 +1113,7 @@ function SideModal(props) {
             <p style={{width:"30%", margin:0}}>Nombre:</p><input style={{width:"70%"}} id="avoid_zone_name" className="form-control required" type="text" required />
             </div>           
             <div className='d-flex justify-content-center align-items-center p-1 m-1' style={{width:"100%"}}>
-            <p style={{width:"30%", margin:0}}>Color:</p><p className='p-0 m-0 border border-dark rounded ' style={{width:"70%", fontWeight:"normal"}}><input id="avoid_zone_color" type='color' onInput={(event)=>changeInColor(event)} defaultValue="#ee0000" style={{width:"30px"}}/><span id="avoid_zone_color_p">{color}</span></p>
+            <p style={{width:"30%", margin:0}}>Color:</p><p className='p-0 m-0 border border-dark rounded ' style={{width:"70%", fontWeight:"normal"}}><input id="avoid_zone_color" type='color' onInput={(event)=>changeInColor(event)} defaultValue="rgba(250, 0, 0, .4)" style={{width:"30px"}}/><span id="avoid_zone_color_p">{color}</span></p>
             </div>
            </div>
             <div className='border rounded p-2' style={{height:450}}>
@@ -1132,31 +1137,31 @@ function TimeModal(props) {
         time: "",
         time_type: "",
     });
-    const values_select_time=[["Salir ahora", "Ahora"], ["Llegar a las", "Llegar"], ["Salir a las", "Salir"]];
+    const values_select_time=["Salir ahora", "Salir a las: ", "Llegar a las:"];
     const options=()=>{
         var options=[];
         values_select_time.forEach(value=>{
             options.push(
-                <option key={`option-${value[1]}`} value={value[1]}>{value[0]}</option>
+                <option key={`option-${value}`} value={value}>{value}</option>
             )
         });
         return options;
     }
     const updateTime=()=>{
         var time=document.getElementById("select-time").value;
-        var date=document.getElementById("select-type").value;
-        setTime({time: time, time_type: date});
-        props.setState(prevState => ({ ...prevState, time: time, time_type: date }));
+        var type=document.getElementById("select-type").value;
+        setTime({time: time, time_type: type});
+        props.setState(prevState => ({ ...prevState, time: time, time_type: type }));
     } 
     return(
         <div>
             <span className="icon"><i className="fas fa-tachometer-alt"></i></span>
             <h4>Tiempo:</h4>
-            <select id="select-type" style={{width:"200px"}} value={time.time} className='form-control mb-5' onChange={updateTime}>
+            <select id="select-type" style={{width:"200px"}} value={props.state.time_type} className='form-control mb-5' onChange={updateTime}>
                 {options()}
             </select>
             <div style={{display:`${props.state.time_type=="Salir ahora"?"none":"block"}`}}>
-            <input id="select-time" onInput={updateTime} className="form-control" type="datetime-local" required />
+            <input id="select-time" value={props.state.time} onInput={updateTime} className="form-control" type="datetime-local" required />
             </div>
         </div>
     )
