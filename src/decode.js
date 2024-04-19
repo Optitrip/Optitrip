@@ -4,10 +4,14 @@
  * SPDX-License-Identifier: MIT
  * License-Filename: LICENSE
  */
+
+// Precisión predeterminada para la codificación de coordenadas
 const DEFAULT_PRECISION = 5;
 
+// Tabla de codificación para la Base64 personalizada
 const ENCODING_TABLE = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
+// Tabla de decodificación para la Base64 personalizada
 const DECODING_TABLE = [
     62, -1, -1, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, -1, -1, -1, -1, -1, -1, -1,
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21,
@@ -15,18 +19,22 @@ const DECODING_TABLE = [
     36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51
 ];
 
+// Versión del formato de codificación
 const FORMAT_VERSION = 1;
 
+// Constantes para tipos de coordenadas
 const ABSENT = 0;
 const LEVEL = 1;
 const ALTITUDE = 2;
 const ELEVATION = 3;
-// Reserved values 4 and 5 should not be selectable
+// Reserved values 4 and 5 should not be selectable / Los valores reservados 4 y 5 no deben ser seleccionables
 const CUSTOM1 = 6;
 const CUSTOM2 = 7;
 
+// Definición de BigInt o Number según disponibilidad
 const Num = typeof BigInt !== "undefined" ? BigInt : Number;
 
+// Función para decodificar la cadena codificada
 function decode(encoded) {
     const decoder = decodeUnsignedValues(encoded);
     const header = decodeHeader(decoder[0], decoder[1]);
@@ -41,7 +49,7 @@ function decode(encoded) {
     const res = [];
 
     let i = 2;
-    for (;i < decoder.length;) {
+    for (; i < decoder.length;) {
         const deltaLat = toSigned(decoder[i]) / factorDegree;
         const deltaLng = toSigned(decoder[i + 1]) / factorDegree;
         lastLat += deltaLat;
@@ -68,11 +76,13 @@ function decode(encoded) {
     };
 }
 
+// Función para decodificar un carácter codificado
 function decodeChar(char) {
     const charCode = char.charCodeAt(0);
     return DECODING_TABLE[charCode - 45];
 }
 
+// Función para decodificar valores que fueron asignados por defecto en la cadena codificada
 function decodeUnsignedValues(encoded) {
     let result = Num(0);
     let shift = Num(0);
@@ -97,6 +107,7 @@ function decodeUnsignedValues(encoded) {
     return resList;
 }
 
+// Función para decodificar el encabezado de la cadena codificada
 function decodeHeader(version, encodedHeader) {
     if (+version.toString() !== FORMAT_VERSION) {
         throw new Error('Invalid format version');
@@ -108,8 +119,9 @@ function decodeHeader(version, encodedHeader) {
     return { precision, thirdDim, thirdDimPrecision };
 }
 
+// Función para convertir un valor no asignado a firmado, es decir, cambiar un número que no tiene un signo asociado a uno que sí lo tiene
 function toSigned(val) {
-    // Decode the sign from an unsigned value
+    // Decode the sign from an unsigned value / Decodifica el signo de un valor no asignado
     let res = val;
     if (res & Num(1)) {
         res = ~res;
@@ -118,12 +130,18 @@ function toSigned(val) {
     return +res.toString();
 }
 
+// Función para codificar la secuencia de coordenadas
 function encode({ precision = DEFAULT_PRECISION, thirdDim = ABSENT, thirdDimPrecision = 0, polyline }) {
     // Encode a sequence of lat,lng or lat,lng(,{third_dim}). Note that values should be of type BigNumber
     //   `precision`: how many decimal digits of precision to store the latitude and longitude.
     //   `third_dim`: type of the third dimension if present in the input.
     //   `third_dim_precision`: how many decimal digits of precision to store the third dimension.
 
+    // Codifica una secuencia de latitud, longitud o latitud, longitud, {tercera_dimensión}. 
+    // Nota: los valores deben ser de tipo BigNumber.
+    //   `precision`: cuántos dígitos decimales de precisión almacenar para la latitud y longitud.
+    //   `thirdDim`: tipo de tercera dimensión si está presente en la entrada.
+    //   `thirdDimPrecision`: cuántos dígitos decimales de precisión almacenar para la tercera dimensión.
     const multiplierDegree = 10 ** precision;
     const multiplierZ = 10 ** thirdDimPrecision;
     const encodedHeaderList = encodeHeader(precision, thirdDim, thirdDimPrecision);
@@ -133,26 +151,28 @@ function encode({ precision = DEFAULT_PRECISION, thirdDim = ABSENT, thirdDimPrec
     let lastLng = Num(0);
     let lastZ = Num(0);
     polyline.forEach((location) => {
-       const lat = Num(Math.round(location[0] * multiplierDegree));
-       encodedCoords.push(encodeScaledValue(lat - lastLat));
-       lastLat = lat;
+        const lat = Num(Math.round(location[0] * multiplierDegree));
+        encodedCoords.push(encodeScaledValue(lat - lastLat));
+        lastLat = lat;
 
-       const lng = Num(Math.round(location[1] * multiplierDegree));
-       encodedCoords.push(encodeScaledValue(lng - lastLng));
-       lastLng = lng;
+        const lng = Num(Math.round(location[1] * multiplierDegree));
+        encodedCoords.push(encodeScaledValue(lng - lastLng));
+        lastLng = lng;
 
-       if (thirdDim) {
-           const z = Num(Math.round(location[2] * multiplierZ));
-           encodedCoords.push(encodeScaledValue(z - lastZ));
-           lastZ = z;
-       }
+        if (thirdDim) {
+            const z = Num(Math.round(location[2] * multiplierZ));
+            encodedCoords.push(encodeScaledValue(z - lastZ));
+            lastZ = z;
+        }
     });
 
     return [...encodedHeaderList, ...encodedCoords].join('');
 }
 
+// Función para codificar el encabezado de la cadena codificada
 function encodeHeader(precision, thirdDim, thirdDimPrecision) {
     // Encode the `precision`, `third_dim` and `third_dim_precision` into one encoded char
+    // Codifica `precision`, `third_dim` y `third_dim_precision` en un solo carácter codificado
     if (precision < 0 || precision > 15) {
         throw new Error('precision out of range. Should be between 0 and 15');
     }
@@ -167,8 +187,10 @@ function encodeHeader(precision, thirdDim, thirdDimPrecision) {
     return encodeUnsignedNumber(FORMAT_VERSION) + encodeUnsignedNumber(res);
 }
 
+// Función para codificar un número no asignado
 function encodeUnsignedNumber(val) {
     // Uses variable integer encoding to encode an unsigned integer. Returns the encoded string.
+    // Utiliza codificación de enteros variables para codificar un entero no asignado. Retorna la cadena codificada.
     let res = '';
     let numVal = Num(val);
     while (numVal > 0x1F) {
@@ -179,9 +201,12 @@ function encodeUnsignedNumber(val) {
     return res + ENCODING_TABLE[numVal];
 }
 
+// Función para codificar un valor escalado
 function encodeScaledValue(value) {
     // Transform a integer `value` into a variable length sequence of characters.
     //   `appender` is a callable where the produced chars will land to
+    // Transforma un valor entero `value` en una secuencia de caracteres de longitud variable.
+    //   `appender` es una función llamable donde los caracteres producidos se depositarán.
     let numVal = Num(value);
     const negative = numVal < 0;
     numVal <<= Num(1);
@@ -192,4 +217,5 @@ function encodeScaledValue(value) {
     return encodeUnsignedNumber(numVal);
 }
 
+// Exportación de funciones para decodificar y codificar la cadena
 export { decode, encode };
