@@ -554,7 +554,7 @@ function MiddleModal(props) {
                                         <strong id="show_routes_money">$${tolls_total}</strong>
                                     </div>
                                 </div>
-                                <p style="color: #007BFF; cursor: pointer; text-decoration: underline; margin: 0px;" onclick="createIndications(${index})">Indicaciones</p>
+                                <p style="color: #007BFF; cursor: pointer; text-decoration: underline; margin: 0px;" onclick="crearIndicaciones(${index})">Indicaciones</p>
                             </div>`;
                             }
                         })

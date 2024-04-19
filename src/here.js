@@ -2,7 +2,7 @@
 var indicaciones = [];
 
 // Función para mostrar las indicaciones de la ruta generada
-const createIndications = (index) => {
+const crearIndicaciones = (index) => {
     // Oculta la sección de las rutas generadas
     let div = document.querySelector("#show_routes_div");
     div.style.display = "none";
