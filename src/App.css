@@ -1,12 +1,12 @@
-.left-components{
+.left-components {
   z-index: 2;
   position: absolute;
-  left:0%;
-  top:0%;
+  left: 0%;
+  top: 0%;
 }
-.menu-parameters-icons{
+.menu-parameters-icons {
   font-size: 30px;
-  margin:20px;
+  margin: 20px;
   padding: 10px;
   width: 50px;
   display: flex;
@@ -14,25 +14,25 @@
   align-items: center;
   aspect-ratio: 1/1;
   border-radius: 200px;
-  color:rgb(255, 255, 255);
+  color: rgb(255, 255, 255);
   cursor: pointer;
 }
-.menu-parameters-icons:hover{
-  width:55px;
+.menu-parameters-icons:hover {
+  width: 55px;
 }
-.shift_started_modal{
+.shift_started_modal {
   display: flex; /* Hidden by default */
   align-items: center;
   position: fixed; /* Stay in place */
   z-index: 4; /* Sit on top */
   top: 0;
-  left:0;
+  left: 0;
   width: 100vw; /* Full width */
   height: 100vh; /* Full height */
   background-color: #30303030;
   overflow: auto; /* Enable scroll if needed */
 }
-.remove-element{
+.remove-element {
   box-sizing: content-box;
   width: 1em;
   height: 1em;
@@ -40,83 +40,97 @@
   color: #000;
   border: 0;
   border-radius: 0.25rem;
-  opacity: .5;
+  opacity: 0.5;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin:0px;
+  margin: 0px;
   float: right;
-  position:absolute;
-  right:3px;
-  top:-4px;
+  position: absolute;
+  right: 3px;
+  top: -4px;
 }
-@media (max-width:990px) {
-.left-components{
-  margin-top:40px;
+@media (max-width: 990px) {
+  .left-components {
+    margin-top: 40px;
+  }
 }
+@media (min-width: 990px) {
+  .left-components {
+    margin-top: 0px;
+  }
 }
-@media (min-width:990px) {
-.left-components{
-  margin-top:0px;
-}
-}
-.transportation-icon{
+.transportation-icon {
   font-size: 50px;
 }
-.transport-vehicles{ 
+.transport-vehicles {
   padding: 5px;
   width: 100px;
-  aspect-ratio: 1; 
-  display: grid; 
-  place-items:center; 
-  border-radius: 4px 
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  border-radius: 4px;
 }
-.transport-vehicles:hover{
+.transport-vehicles:hover {
   background-color: #3795fa;
 }
-.transport-vehicles > p{
+.transport-vehicles > p {
   margin-bottom: 0px;
   font-size: 15px;
 }
-.upper-buttons-div>.btn{
-  margin-left: 30px;
-  color:white;
-  border:0px;
+
+.upper-buttons-div {
+  display: flex;
+  justify-content: center;
+}
+
+.upper-buttons-div > .btn {
+  color: white;
+  border-radius: 0px !important;
+  border: 0px !important;
   height: 70px;
+  display: flex;
+  align-items: center;
 }
-.upper-buttons-div>.btn{
-  margin:0px;
-  height:70px;
-  font-size: 19px;
-}
-.upper-buttons-div>.btn>i{
+
+.upper-buttons-div > .btn > i {
   font-size: 35px;
+  margin-right: 10px; /* Ajusta el margen entre el icono y el texto */
+  margin-left: 10px; /* Ajusta el margen a la izquierda del icono */
 }
-.boton-icono-evitar{
-  margin:15px;
-  width:180px;
+
+.upper-buttons-div > .btn > span {
+  font-size: 16px;
+  font-weight: bold;
+  margin-right: 10px;
+}
+
+.boton-icono-evitar {
+  margin: 15px;
+  width: 180px;
   aspect-ratio: 1/1;
   display: flex;
   justify-content: center;
   flex-wrap: wrap;
   background-color: transparent;
-  color:black;
-  border:0;
+  color: black;
+  border: 0;
 }
-.boton-icono-evitar>i{
+
+.boton-icono-evitar > i {
   width: 150px;
   font-size: 160px;
 }
-.vehicles-buttons{
+.vehicles-buttons {
   display: flex;
   width: 50px;
   justify-content: center;
   flex-direction: column;
 }
-.vehicles-buttons>i{
+.vehicles-buttons > i {
   font-size: 35px;
 }
-.vehicles-buttons>p{
+.vehicles-buttons > p {
   font-size: 20px;
   width: 100%;
 }

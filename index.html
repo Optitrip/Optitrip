@@ -1,61 +1,61 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" defer>
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
-    <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-core.js" defer></script>
-    <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-service.js" defer></script>
-    <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-ui.js" defer></script>
-    <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js" defer></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
-    <script src="/src/decode.js" defer></script>
-    <script src="https://65d3982be30a72156a7a9f4e--fantastic-alpaca-03e9c0.netlify.app/here.js" defer></script>
-    <script src="/src/here.js" defer></script>
-    <title>OptiTrip</title>
-  </head>
-  <body style="overflow: hidden;">
-    <div>
-      <div style="background:linear-gradient( #C6C6C6, #767676); width:100vw" class="navbar-dark bg-dark box-shadow">
-        <div style="justify-content:space-between" class="d-flex p-1 pl-4 align-items-center">
-            <a href="#" class="navbar-brand d-flex align-items-center">
-                <img src="/OPTITRIP LOGO.png" alt="" srcset="" height="50"/>
-            </a>
-            <div>
-                <div class='upper-buttons-div'>
-                    <button class='btn btn-outline-primary active'>
-                        <i class="icon-icono-mapa"></i>
-                        <strong>Mapa</strong>
-                    </button>
-                    <button class='btn btn-outline-primary'>
-                        <i class="icon-icono-reportes"></i>
-                        <strong>Reportes</strong>
-                    </button>
-                    <button class="btn btn-outline-primary">
-                        <i class="icon-icono-flotilla"></i>
-                        <strong>Flota</strong>
-                    </button>
-                    <button class="btn btn-outline-primary">
-                        <i class="icon-icono-mensaje"></i>
-                        <strong>Mensajes</strong>
-                    </button>
-                    <button class="btn btn-outline-primary">
-                        <i class="icon-icono-conductor"></i>
-                        <strong>Conductores</strong>
-                    </button>
 
-                </div>
-            </div>
-            <div class='text-white'>
-                    <strong>Usuario</strong>
-                <button class="btn text-white" style="border:0; background-color:transparent">
-                <i class="icon-keyboard_arrow_down"></i>
-                </button>
-            </div>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" defer>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+    integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+  <link rel="stylesheet" type="text/css" href="https://js.api.here.com/v3/3.1/mapsjs-ui.css" />
+  <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-core.js" defer></script>
+  <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-service.js" defer></script>
+  <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-ui.js" defer></script>
+  <script type="text/javascript" src="https://js.api.here.com/v3/3.1/mapsjs-mapevents.js" defer></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Lato:wght@700&display=swap" rel="stylesheet">
+  <script src="/src/decode.js" defer></script>
+  <script src="https://65d3982be30a72156a7a9f4e--fantastic-alpaca-03e9c0.netlify.app/here.js" defer></script>
+  <script src="/src/here.js" defer></script>
+  <title>OptiTrip</title>
+</head>
+
+<body style="overflow: hidden;">
+  <div>
+    <div style="background:linear-gradient( #C6C6C6, #767676); width:100vw" class="navbar-dark bg-dark box-shadow">
+      <div class="d-flex align-items-center">
+        <a href="#" class="navbar-brand d-flex align-items-center mx-5">
+          <img src="/logo_optitrip.png" alt="" srcset="" height="50" />
+        </a>
+        <div class='upper-buttons-div'>
+          <button class='btn btn-outline-primary active'>
+            <i class="icon-icono-mapa"></i>
+            <span>Mapa</span>
+          </button>
+          <button class='btn btn-outline-primary'>
+            <i class="icon-icono-reportes"></i>
+            <span>Reportes</span>
+          </button>
+          <button class="btn btn-outline-primary">
+            <i class="icon-icono-flotilla"></i>
+            <span>Flota</span>
+          </button>
+          <button class="btn btn-outline-primary">
+            <i class="icon-icono-mensaje"></i>
+            <span>Mensajes</span>
+          </button>
+          <button class="btn btn-outline-primary">
+            <i class="icon-icono-conductor"></i>
+            <span>Conductores</span>
+          </button>
         </div>
+        <div class='text-white ml-auto mr-3'>
+          <strong>Usuario</strong>
+          <button class="btn text-white" style="border:0; background-color:transparent">
+            <i class="icon-keyboard_arrow_down"></i>
+          </button>
+        </div>
+      </div>
     </div>
     <div id="root"></div>
     <div style="display: flex; justify-content: center;">
@@ -68,7 +68,8 @@
           <i class="icon-icono-historial" style="font-size: 50px;"></i>
           <strong>Historial</strong></button>
       </div>
-      <div id="show_routes_div" style="width: 400px; height:100vh; display: none; flex-direction: column; padding:10px;border-radius: 10px; ">
+      <div id="show_routes_div"
+        style="width: 400px; height:100vh; display: none; flex-direction: column; padding:10px;border-radius: 10px; ">
         <h3 style="font-weight:bold; text-decoration: underline;text-align:center;">Resultados de la ruta</h3>
         <div><strong>Origen</strong> <span id="show_routes_from_destinations">Ibero Leon</span></div>
         <div><strong>Destino</strong> <span id="show_routes_to_destinations">Ibero Leon</span></div>
@@ -81,18 +82,19 @@
           <button id="show_routes_end" class="btn btn-lg btn-danger m-2 float-right">Finalizar</button>
         </div>
       </div>
-      <div id="show_instructions_div" style="width: 400px; height:100vh; display: none; flex-direction: column; padding:10px;border-radius: 10px; ">
+      <div id="show_instructions_div"
+        style="width: 400px; height:100vh; display: none; flex-direction: column; padding:10px;border-radius: 10px; ">
         <h3 style="font-weight:bold; text-decoration: underline;text-align:center;">Resultados de la ruta</h3>
-        
+
         <div style="padding: 10px; margin: 10px; border: 1px black solid; height:100px">
           <div style="display: flex; justify-content: space-around;font-weight: 700;">
-              <span id="show_instructions_time" style="color: green;"></span>
-              <span id="show_instructions_distance"></span>
-              <span id="show_instructions_money"></span>
+            <span id="show_instructions_time" style="color: green;"></span>
+            <span id="show_instructions_distance"></span>
+            <span id="show_instructions_money"></span>
           </div>
           <p id="show_instructions_0">Indicacion</p>
         </div>
-        
+
         <h5 id="show_instructions_to" style="font-weight:bold;text-align:center;">destino</h5>
         <ul id="show_instructions_all" style="height: 400px;overflow: auto;">
           <li>instrucciones</li>
@@ -100,9 +102,12 @@
         <h5 id="show_instructions_from" style="font-weight:bold;text-align:center;">DE donde partes</h5>
         <button class="btn btn-primary" onclick="returnToRoutes()">Atras</button>
       </div>
-      <div id="map" style="width: calc(100vw - 100px); height:calc(100vh - 70px);overflow: hidden; float:left; position:relative"></div>
+      <div id="map"
+        style="width: calc(100vw - 100px); height:calc(100vh - 70px);overflow: hidden; float:left; position:relative">
+      </div>
     </div>
-    </div>
-    <script type="module" src="/src/main.jsx"></script>
-  </body>
+  </div>
+  <script type="module" src="/src/main.jsx"></script>
+</body>
+
 </html>
