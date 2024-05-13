@@ -4,7 +4,7 @@ import './style.css'
 import { decode } from './decode.js';
 
 // API KEY para consumir la API de Here Maps
-var apiKeyHERE = "ACUA0ALqnuCPgRTUg1bLcqPmqI8A2k2TycrCjolveOE";
+var apiKeyHERE = "jmFjYWbE2yhne3n-l0ZbV8uMsFqx1HpdcvET0x2yBhw";
 
 // Comenzamos con la creación de las variables globales para el uso de los mapas de HERE:
 var platformHERE = null;
