@@ -256,6 +256,11 @@ export default function App(props) {
     else {
         plus_position = 400;
     }
+
+    console.log(state)
+    console.log(state.current_position)
+    console.log(addToDestinations)
+    
     return (
         <div>
             <div className="container clearfix" style={{ zIndex: 1, position: "absolute", top: 70, left: 200 + plus_position, margin: "10px", width: "500px" }}>
