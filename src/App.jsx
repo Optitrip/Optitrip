@@ -1006,7 +1006,9 @@ function AvoidModal(props) {
             var polygon = null;
             zones.push({ name: `Zona ${zones.length}`, points: [], LineString: line, polygon: polygon, color: "rgba(250, 0, 0, .4)", icons: [] });
             index = zones.length - 1;
+            console.log(zones.length);
         }
+        console.log("Index: " + index);
         props.setState(prevState => ({ ...prevState, avoid_zones: zones, edit_avoid_zone: index, avoid_zone_event_listener: true }));
         openModal(false);
         avoid_zone_index = index;
