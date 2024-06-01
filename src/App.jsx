@@ -898,10 +898,13 @@ function ModeModal(props) {
 const handleAvoidZoneClick = (ev) => {
     var index = avoid_zone_index;
     var props = avoid_zone_props;
+    console.log(props);
     if (index >= 0) {
         var pos = map.screenToGeo(ev.currentPointer.viewportX, ev.currentPointer.viewportY);
         var zones = props.state.avoid_zones;
+        console.log(props.state.avoid_zones);
         var edit_avoid_zone = index;
+        console.log(edit_avoid_zone);
         if (index == -1) {
             var lineString = new H.geo.LineString();
             var zone = { name: `Zona ${props.state.avoid_zones.length}`, points: [], LineString: lineString };
