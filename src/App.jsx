@@ -1011,8 +1011,12 @@ function AvoidModal(props) {
         console.log("Index: " + index);
         props.setState(prevState => ({ ...prevState, avoid_zones: zones, edit_avoid_zone: index, avoid_zone_event_listener: true }));
         openModal(false);
+        console.log("Props:");
+        console.log(props);
         avoid_zone_index = index;
         avoid_zone_props = props;
+        console.log("Avoid zone props:");
+        console.log(avoid_zone_props);
         document.querySelector("#avoid_zone_name").value = "";
         document.querySelector("#avoid_zone_color_p").innerText = zones[index].color;
         document.querySelector("#avoid_zone_color").value = zones[index].color;
